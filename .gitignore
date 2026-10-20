@@ -1,0 +1,17 @@
+# 密钥和敏感文件，永远不进仓库
+.env
+*.env
+*token*
+*cookie*
+*secret*
+*.har
+
+# 运行产物
+__pycache__/
+*.pyc
+*.log
+*.json.bak
+
+# 系统文件
+.DS_Store
+Thumbs.db
