@@ -264,6 +264,16 @@ def _session_files(uid):
 
 def load_token(uid=None):
     uid = _uid_or_active(uid)
+    # 环境变量 XMLY_TOKEN 优先级最高（慕斯加，仿 XMLY_DEVICE 的官方后门）：
+    # 青龙面板里把 token 填进环境变量即可，免 import-session、免 session.json。
+    # 值粘贴「608776240&xxxx」原值或带 1&_token= 前缀的整段都认。
+    env_tok = (os.environ.get("XMLY_TOKEN") or "").strip().strip('"').strip("'")
+    if env_tok.startswith("1&_token="):
+        env_tok = env_tok[len("1&_token="):].split(";")[0].strip()
+    if env_tok:
+        tok_uid = env_tok.split("&")[0]
+        if not uid or not tok_uid or tok_uid == str(uid):
+            return env_tok
     for p in _session_files(uid):
         if not os.path.exists(p):
             continue

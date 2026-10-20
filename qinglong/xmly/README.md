@@ -230,3 +230,11 @@ base64 -d work/so/libnativelib.so.b64 > work/so/libnativelib.so
 ```
 
 在 xmly 目录里执行上面这一行就行。还原后其余用法和原包一致。
+
+## 环境变量方式（青龙推荐，慕斯加）
+
+脚本已支持 `XMLY_TOKEN` 环境变量（load_token 里优先级最高，逻辑仿官方的 XMLY_DEVICE）：
+
+- 青龙面板「环境变量」里新建 `XMLY_TOKEN`，值填 token 原值（形如 `608776240&xxxx`，带 `1&_token=` 前缀粘整段也认）
+- 再建 `XMLY_DEVICE` 填设备号
+- 之后每日任务命令不用再 import-session，直接跑 farm/mega 即可；token 过期时只改环境变量里这一个值
