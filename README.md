@@ -17,5 +17,5 @@
 
 | 任务 | 目录 | 运行方式 | 需要的环境变量 |
 | --- | --- | --- | --- |
-| （待迁入）喜马拉雅金币 | qinglong/xmly/ | Windows 现行计划任务，待迁青龙 | 待整理 |
+| 喜马拉雅金币 | qinglong/xmly/ | 青龙订阅拉取 / Windows 本地跑均可 | XMLY_DEVICE（可选，设备号）；token 用 import-session 写入本地 session.json，不进仓库 |
 | （学习中）B站每日任务 | qinglong/bilibili/ | 青龙 | 待抓包后确定 |
