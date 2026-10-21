@@ -43,15 +43,17 @@ SO = os.path.join(ROOT, "work", "so", "libnativelib.so")
 
 
 def _ensure_so():
-    """仓库里只存 .b64 文本；.so 不在时自己解码出来，省去手动还原步骤。"""
-    if os.path.exists(SO):
-        return
+    """仓库里只存 .b64 文本；.so 缺失或内容不对时自己解码出来，省去手动还原步骤。"""
     b64_path = SO + ".b64"
     if not os.path.exists(b64_path):
         return
     import base64
     with open(b64_path, "rb") as f:
         data = base64.b64decode(f.read())
+    if os.path.exists(SO):
+        with open(SO, "rb") as f:
+            if f.read() == data:
+                return
     with open(SO, "wb") as f:
         f.write(data)
 
