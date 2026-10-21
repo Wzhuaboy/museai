@@ -129,6 +129,7 @@ REWARD_TYPE = {
     "LISTEN_TASK": 12,
     "DAILY": 6,
     "EXTRA_REWARDS": 13,
+    "SHARE_COINS": 15,            # 2026-10-21 真机 HAR 实锤（App 内点分享，coins=0 服务端定额）；门限待小量验证
 }
 
 # ★ 实测可无限刷的金矿（rewardType, sourceName, coins 参数, 单次约值）
@@ -451,6 +452,41 @@ def reward(rtype, source, coins=100, index=1, ticket=None, extra=None):
     st, b = http("POST", "incentive/ting/welfare/rewardGoldCoin/%d"
                  "?rn-credit-bundle-version=%s" % (ts, BUNDLE_VER), body)
     return jget(b).get("data") or {"_raw": b[:200]}
+
+
+def do_share(times, interval):
+    """分享得金币（rewardType=15，SHARE_COINS）。2026-10-21 真机 HAR 样本：
+    App 内点分享时 coins 传 0、金额由服务端定。服务端门限未知 → 小量试探，
+    连续失败 2 次即停，避免硬敲触发限频/风控。"""
+    tk = load_ticket()
+    if not tk:
+        print("[!] 缺 ticket：python3 python/xmly_water.py from-har --in <har>")
+        return
+    allowed, acc, cfg, msg = _limit_gate()
+    print("金币本额度: %s" % msg)
+    if not allowed:
+        return
+    print("起始余额: %s" % balance())
+    ok = total = 0
+    fails = 0
+    for i in range(times):
+        d = reward(15, "SHARE_COINS", 0, ticket=tk)
+        if d.get("success"):
+            ok += 1
+            fails = 0
+            got = d.get("coins") or 0
+            total += got
+            _realtime_bump(acc, got, balance=d.get("balance"))
+            print("  #%d ✔ +%-5s 余额 %-7s %s" % (i + 1, got, d.get("balance"), d.get("toast") or ""))
+        else:
+            fails += 1
+            print("  #%d ✘ code=%-6s %s" % (i + 1, d.get("code"), d.get("toast") or d.get("_raw") or ""))
+            if fails >= 2:
+                print("  连续失败 2 次，停（多半已达今日门限或被限频）")
+                break
+        if i + 1 < times:
+            time.sleep(interval)
+    print("分享金币：成功 %d 次，合计 +%d，末次余额 %s" % (ok, total, balance()))
 
 
 def do_mega(times, interval):
@@ -791,6 +827,9 @@ def main():
     p_m = sub.add_parser("mega")
     p_m.add_argument("--times", type=int, default=200)
     p_m.add_argument("--interval", type=float, default=1.5)
+    p_s = sub.add_parser("share", help="分享得金币（rewardType=15，小量试探）")
+    p_s.add_argument("--times", type=int, default=5)
+    p_s.add_argument("--interval", type=float, default=5)
     p_h = sub.add_parser("from-har")
     p_h.add_argument("--in", dest="infile", required=True)
     p_t = sub.add_parser("set-ticket")
@@ -918,6 +957,8 @@ def main():
         print("  %s" % msg)
     elif cmd == "mega":
         do_mega(args.times, args.interval)
+    elif cmd == "share":
+        do_share(args.times, args.interval)
     elif cmd == "from-har":
         from_har(args.infile)
     elif cmd == "set-ticket":
