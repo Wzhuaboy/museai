@@ -513,6 +513,22 @@ def do_mega(times, interval):
     print("（每出一笔都会实时写入 accounts.js，中断也不丢计数）")
     stat = {m[0]: [0, 0] for m in MINES}
     bal = None
+    # ★ 开刷前先低频试分享金币（rewardType=15）：10067 是冷却门，隔 60 秒重试，最多 3 次
+    s_ok = s_tot = 0
+    for k in range(3):
+        d = reward(15, "SHARE_COINS", 0, ticket=tk)
+        if d.get("success"):
+            got = d.get("coins") or 0
+            s_ok += 1
+            s_tot += got
+            bal = d.get("balance")
+            _realtime_bump(acc, got, balance=bal)
+            print("  [分享] ✔ +%s 余额 %s" % (got, bal))
+            break
+        print("  [分享] ✘ code=%s %s" % (d.get("code"), d.get("toast") or ""))
+        if d.get("code") != 10067 or k == 2:
+            break
+        time.sleep(60)
     try:
         for i in range(times):
             rtype, source, coins, _ = MINES[i % len(MINES)]
@@ -545,8 +561,10 @@ def do_mega(times, interval):
     for rt, v in stat.items():
         name = dict((m[0], m[1]) for m in MINES)[rt]
         print("  rewardType=%-3s %-22s %4d 次  +%d" % (rt, name, v[0], v[1]))
+    if s_ok:
+        print("  rewardType=%-3s %-22s %4d 次  +%d" % (15, "SHARE_COINS", s_ok, s_tot))
     end_bal = balance()
-    print("  合计 +%d，余额 %s" % (tot, end_bal))
+    print("  合计 +%d，余额 %s" % (tot + s_tot, end_bal))
     if ACC is not None and acc is not None:
         a2 = ACC.pick(uid=acc.get("uid")) or acc
         real = max(0, (end_bal or 0) - (start_bal or 0))
