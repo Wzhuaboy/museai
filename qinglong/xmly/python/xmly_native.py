@@ -42,6 +42,23 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SO = os.path.join(ROOT, "work", "so", "libnativelib.so")
 
 
+def _ensure_so():
+    """仓库里只存 .b64 文本；.so 不在时自己解码出来，省去手动还原步骤。"""
+    if os.path.exists(SO):
+        return
+    b64_path = SO + ".b64"
+    if not os.path.exists(b64_path):
+        return
+    import base64
+    with open(b64_path, "rb") as f:
+        data = base64.b64decode(f.read())
+    with open(SO, "wb") as f:
+        f.write(data)
+
+
+_ensure_so()
+
+
 class Emu:
     def __init__(self, path=SO, verbose=False):
         self.path = path
