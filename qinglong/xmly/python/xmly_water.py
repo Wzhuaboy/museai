@@ -512,6 +512,7 @@ def do_mega(times, interval):
     print("起始余额: %s" % start_bal)
     print("（每出一笔都会实时写入 accounts.js，中断也不丢计数）")
     stat = {m[0]: [0, 0] for m in MINES}
+    failstat = {}
     bal = None
     # ★ 开刷前先低频试分享金币（rewardType=15）：10067 是冷却门，隔 60 秒重试，最多 3 次
     s_ok = s_tot = 0
@@ -540,7 +541,10 @@ def do_mega(times, interval):
                 bal = d.get("balance")
                 _realtime_bump(acc, got, balance=bal)              # ★ 实时写盘
             elif d.get("code") == 10003:
-                pass   # 该类型暂时用尽，继续下一个
+                failstat[10003] = failstat.get(10003, 0) + 1   # 该类型暂时用尽，继续下一个
+            else:
+                _c = d.get("code")
+                failstat[_c] = failstat.get(_c, 0) + 1
             if (i + 1) % 16 == 0:
                 tot = sum(v[1] for v in stat.values())
                 a2 = (ACC.pick(uid=acc.get("uid")) if (ACC and acc) else None) or {}
@@ -563,6 +567,8 @@ def do_mega(times, interval):
         print("  rewardType=%-3s %-22s %4d 次  +%d" % (rt, name, v[0], v[1]))
     if s_ok:
         print("  rewardType=%-3s %-22s %4d 次  +%d" % (15, "SHARE_COINS", s_ok, s_tot))
+    if failstat:
+        print("  未成功原因统计: %s" % (failstat,))
     end_bal = balance()
     print("  合计 +%d，余额 %s" % (tot + s_tot, end_bal))
     if ACC is not None and acc is not None:
