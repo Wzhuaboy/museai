@@ -7,6 +7,7 @@
 - `qinglong/` — 青龙面板运行的 Python 脚本，按任务分子文件夹
 - `quantumultx/` — QuantumultX 用的 JS 脚本和重写配置
 - `common/` — 所有任务共用的工具（Bark 通知、随机延时、状态检查等）
+- `github-trending-cn/` — GitHub 热门中文翻译，不盈利公益项目；每天 3 篇（日榜、周榜、月榜各 1 个），含 README 翻译和中文部署指南
 
 ## 硬规矩
 
