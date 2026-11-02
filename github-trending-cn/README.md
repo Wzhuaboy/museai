@@ -47,4 +47,8 @@ github-trending-cn/
 
 ## 索引
 
-暂无已发布文章，首批文章发布后按日期倒序列在这里。
+### 2026-11-02
+
+- 日榜第 1 名：[claude-mem：给 AI 编程助手加长期记忆](2026-11-02/thedotmack-claude-mem.md)（thedotmack/claude-mem）
+- 周榜第 1 名：[hallmark：让 AI 做的网页不再一眼像 AI 生成的](2026-11-02/Nutlope-hallmark.md)（Nutlope/hallmark）
+- 月榜第 1 名：[security-audit-skill：把编程助手变成安全审计员](2026-11-02/cloudflare-security-audit-skill.md)（cloudflare/security-audit-skill）
