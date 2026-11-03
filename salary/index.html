@@ -313,7 +313,7 @@
         <div class="top-cell">
           <div class="top-label">3 · 已加班</div>
           <div><input class="mono small" id="otNightsInput" type="number" min="0" max="31" step="1" value="0" inputmode="decimal" aria-label="晚上加班晚数" /> 晚 <input class="mono small" id="otSundaysInput" type="number" min="0" max="5" step="1" value="0" inputmode="decimal" aria-label="周日加班天数" /> 天</div>
-          <div class="top-sub">晚上 <b id="otNights">0</b> 晚 × ¥75 · 周日 <b id="otSundays">0</b> 天 × ¥275<br>加班费 <b id="otPay">¥0</b></div>
+          <div class="top-sub">填之前几天的，今晚/今天周日用第 2 格控制，不用重复填<br>晚上 <b id="otNights">0</b> 晚 × ¥75 · 周日 <b id="otSundays">0</b> 天 × ¥275<br>加班费 <b id="otPay">¥0</b></div>
         </div>
         <div class="top-cell">
           <div class="top-label">4 · 请假</div>
@@ -332,7 +332,7 @@
       <section class="meter" aria-label="当前已赚工资">
         <div class="float-layer" id="floatLayer"></div>
         <div class="meter-label">
-          <span>当前工资余额</span>
+          <span>本月工资余额</span>
           <span class="persec">每秒入账 <b class="mono" id="perSec">+¥0.0069</b></span>
         </div>
         <div class="amount mono"><span class="yuan">¥</span><span id="amount">0.0000</span></div>
@@ -354,13 +354,6 @@
         <div class="stat"><div class="v mono" id="monthEarned">¥0.00</div><div class="k">本月已赚</div></div>
       </div>
 
-      <!-- 控制 -->
-      <div class="controls">
-        <button class="btn btn-main pause-state" id="toggleBtn" type="button">
-          <svg id="toggleIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
-          <span id="toggleLabel">暂停一下（下班摸鱼）</span>
-        </button>
-      </div>
       <p style="margin:10px 2px 0;font-size:12.5px;color:var(--ink-soft);text-align:center;">底薪对应周一到周六 8:00-11:30，12:30-17:00 · 加班只记晚上 18:00-21:00，按 ¥25/小时 · 周日也可以加班 · 每天 8:00 自动开始 · 已自动保存，关掉再打开继续涨（同一手机、同一浏览器有效）</p>
 
       <!-- 本月明细（参考：考勤核算的应发/实发拆解） -->
@@ -372,23 +365,6 @@
           <div style="display:flex;justify-content:space-between;"><span>加班费（晚上 <span id="bdNights">0</span> 晚 + 周日 <span id="bdSundays">0</span> 天）</span><b class="mono" id="bdOt">¥0</b></div>
           <div style="display:flex;justify-content:space-between;"><span>请假扣款（<span id="bdLeave">0</span> 天 <span id="bdLeaveH">0</span> 小时）</span><b class="mono" id="bdDeduct">-¥0</b></div>
           <div style="display:flex;justify-content:space-between;border-top:1.5px solid var(--line);padding-top:8px;"><span><b>本月预计</b></span><b class="mono" id="bdTotal">¥0</b></div>
-        </div>
-      </section>
-
-      <!-- 工资设置 -->
-      <section class="card">
-        <h2>起始余额</h2>
-        <p class="hint">底薪在最上面一行填，时薪由底薪算出来，不用在这里换。</p>
-        <div class="start-block">
-          <h3>起始余额</h3>
-          <p class="hint">已经上班一阵子了？把目前已经赚到的钱填进来，点一下，余额就从这个数接着往上涨。</p>
-          <div class="start-row">
-            <label class="start-input">¥
-              <input class="mono" id="startInput" type="number" min="0" max="1000000" step="0.01" value="0" inputmode="decimal" aria-label="起始余额（元）" />
-            </label>
-            <button class="btn-apply" id="startBtn" type="button">从这个余额开始</button>
-            <span class="start-note">当前起始余额 <b class="mono" id="startEcho">¥0.00</b></span>
-          </div>
         </div>
       </section>
 
@@ -614,7 +590,7 @@
             if (!d || typeof d.earned !== "number") return false;
             state.rate = d.rate || 25;
             state.startBalance = d.startBalance || 0;
-            state.running = d.running !== false;
+            state.running = true;
             state.monthlySalary = d.monthlySalary || 0;
             state.sundayOvertime = !!d.sundayOvertime;
             state.eveningDates = Array.isArray(d.eveningDates) ? d.eveningDates : [];
@@ -644,26 +620,26 @@
               state.earned = 0;
               state.workedMs = 0;
               state.lastWholeYuan = 0;
-              if (state.running) {
+              {
                 var dayStart = new Date();
                 dayStart.setHours(8, 0, 0, 0);
                 var eb = workEarningsBetween(dayStart.getTime(), Date.now());
                 if (eb.seconds > 0) {
                   state.earned += eb.earnings;
                   state.workedMs += eb.seconds * 1000;
-                  state.lastWholeYuan = Math.floor(state.earned);
+                  state.lastWholeYuan = Math.floor(monthlyBalance());
                 }
               }
             } else {
               state.earned = d.earned;
               state.workedMs = d.workedMs || 0;
-              state.lastWholeYuan = Math.floor(state.earned);
-              if (state.running && d.savedAt) {
+              state.lastWholeYuan = Math.floor(monthlyBalance());
+              if (d.savedAt) {
                 var eb2 = workEarningsBetween(d.savedAt, Date.now());
                 if (eb2.seconds > 0 && eb2.seconds < 11 * 3600) {
                   state.earned += eb2.earnings;
                   state.workedMs += eb2.seconds * 1000;
-                  state.lastWholeYuan = Math.floor(state.earned);
+                  state.lastWholeYuan = Math.floor(monthlyBalance());
                 }
               }
             }
@@ -671,7 +647,6 @@
           } catch (e) { return false; }
         }
         function settleElapsed() {
-          if (!state.running) return;
           var now = Date.now();
           if (lastSaveAt && now > lastSaveAt) {
             var eb = workEarningsBetween(lastSaveAt, now);
@@ -690,7 +665,6 @@
             perMinEchoEl = $("perMinEcho"), yuanCountEl = $("yuanCount"),
             goalFillEl = $("goalFill"), goalEchoEl = $("goalEcho"), goalPctEl = $("goalPct"),
             statusDot = $("statusDot"), statusText = $("statusText"),
-            toggleBtn = $("toggleBtn"), toggleLabel = $("toggleLabel"), toggleIcon = $("toggleIcon"),
             floatLayer = $("floatLayer"), toastZone = $("toastZone"), quipEl = $("quip");
 
         function fmt(n, digits) {
@@ -723,12 +697,13 @@
         });
 
         function renderFun() {
+          var bal = monthlyBalance();
           funRows.forEach(function (r) {
-            var count = Math.floor(state.earned / r.item.price);
-            var frac = (state.earned % r.item.price) / r.item.price;
+            var count = Math.floor(bal / r.item.price);
+            var frac = (bal % r.item.price) / r.item.price;
             r.countEl.textContent = count;
             r.nextEl.textContent = count === 0
-              ? " · 还差 ¥" + fmt(r.item.price - state.earned, 2)
+              ? " · 还差 ¥" + fmt(r.item.price - bal, 2)
               : " · 下一" + r.item.unit + "进度 " + Math.round(frac * 100) + "%";
             r.barEl.style.width = (frac * 100).toFixed(1) + "%";
             r.row.classList.toggle("done", count > 0);
@@ -767,15 +742,35 @@
         /* 起始余额已经覆盖的里程碑直接标记为达成，避免补弹庆祝 */
         function primeMilestones() {
           state.hitMilestones = {};
+          var bal = monthlyBalance();
           ITEMS.forEach(function (item, i) {
-            if (state.earned >= item.price) state.hitMilestones[i] = true;
+            if (bal >= item.price) state.hitMilestones[i] = true;
           });
+        }
+
+        /* 本月余额：前面已上满的日子按日薪算 + 今天到现在 + 已填的加班费 - 请假扣款，不从 0 开始 */
+        function completedWorkdaysBeforeToday() {
+          var now = new Date();
+          var count = 0;
+          for (var d = 1; d < now.getDate(); d++) {
+            var dt = new Date(now.getFullYear(), now.getMonth(), d);
+            if (dt.getDay() !== 0) count++;
+          }
+          return count;
+        }
+        function monthlyBalance() {
+          if (!state.monthlySalary) return state.earned;
+          var daily = state.monthlySalary / 26;
+          var pastNormal = completedWorkdaysBeforeToday() * daily;
+          var pastOt = (state.otNights || 0) * 3 * OVERTIME_RATE + (state.otSundays || 0) * 11 * OVERTIME_RATE;
+          var bal = pastNormal + state.earned + pastOt - leaveDeductAmount();
+          return bal < 0 ? 0 : bal;
         }
 
         function renderEarned() {
           var todayEl = $("todayEarned"), monthEl = $("monthEarned");
           if (todayEl) todayEl.textContent = "¥" + fmt(state.earned, 2);
-          if (monthEl) monthEl.textContent = "¥" + fmt((state.monthBase || 0) + state.earned, 2);
+          if (monthEl) monthEl.textContent = "¥" + fmt(monthlyBalance(), 2);
         }
 
         function renderGoal() {
@@ -803,14 +798,15 @@
           setTimeout(function () { t.remove(); }, 4000);
         }
         function checkMilestones() {
-          var whole = Math.floor(state.earned);
+          var bal = monthlyBalance();
+          var whole = Math.floor(bal);
           if (whole > state.lastWholeYuan) {
             state.lastWholeYuan = whole;
             yuanCountEl.textContent = whole;
             floatChip("+¥1");
           }
           ITEMS.forEach(function (item, i) {
-            if (state.earned >= item.price && !state.hitMilestones[i]) {
+            if (bal >= item.price && !state.hitMilestones[i]) {
               state.hitMilestones[i] = true;
               toast("达成：" + item.milestone);
             }
@@ -819,7 +815,6 @@
 
         /* ---------- 主循环 ---------- */
         function updateScheduleStatus() {
-          if (!state.running) return;
           var st = workStatusLabel(new Date());
           statusDot.className = "dot " + (st.active ? "running" : "paused");
           statusText.textContent = st.text;
@@ -851,13 +846,13 @@
           var dt = ts - state.lastTs;
           state.lastTs = ts;
           var inWork = isWorkTime(new Date());
-          if (state.running && inWork && dt > 0 && dt < 1000) {
+          if (inWork && dt > 0 && dt < 1000) {
             state.workedMs += dt;
             state.earned += effectiveRate(new Date()) / 3600 * (dt / 1000);
           }
           updateScheduleStatus();
           renderCountdown();
-          amountEl.textContent = fmt(state.earned, 4);
+          amountEl.textContent = fmt(monthlyBalance(), 4);
           var s = Math.floor(state.workedMs / 1000);
           var hh = String(Math.floor(s / 3600)).padStart(2, "0");
           var mm = String(Math.floor(s % 3600 / 60)).padStart(2, "0");
@@ -883,48 +878,6 @@
         quipEl.innerHTML = QUIPS[0]; quipIdx = 1;
         setInterval(showQuip, 6000);
 
-        /* ---------- 控件 ---------- */
-        var ICON_PAUSE = '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';
-        var ICON_PLAY = '<path d="M8 5v14l11-7z"/>';
-        function setRunning(on) {
-          if (on && !state.running) lastSaveAt = Date.now();
-          state.running = on;
-          statusDot.className = "dot " + (on ? "running" : "paused");
-          statusText.textContent = on ? "上班中 · 工资正在入账" : "已暂停 · 余额停止上涨";
-          toggleLabel.textContent = on ? "暂停一下（下班摸鱼）" : "继续上班";
-          toggleIcon.innerHTML = on ? ICON_PAUSE : ICON_PLAY;
-          toggleBtn.classList.toggle("pause-state", on);
-          saveState();
-        }
-        toggleBtn.addEventListener("click", function () { setRunning(!state.running); });
-
-        /* ---------- 起始余额 ---------- */
-        var startInput = $("startInput"), startEcho = $("startEcho");
-        function applyStartBalance() {
-          var v = parseFloat(startInput.value);
-          if (isNaN(v) || v < 0) v = 0;
-          if (v > 1000000) v = 1000000;
-          startInput.value = v;
-          state.startBalance = v;
-          state.earned = v;
-          state.workedMs = 0;
-          state.lastWholeYuan = Math.floor(v);
-          yuanCountEl.textContent = state.lastWholeYuan;
-          primeMilestones();
-          startEcho.textContent = "¥" + fmt(v, 2);
-          renderGoal();
-          renderFun();
-          lastSaveAt = Date.now();
-          saveState();
-          toast(v > 0
-            ? "已从 ¥" + fmt(v, 2) + " 开始计算，继续往上涨"
-            : "起始余额已归零，从 ¥0 开始计算");
-        }
-        $("startBtn").addEventListener("click", applyStartBalance);
-        startInput.addEventListener("keydown", function (e) {
-          if (e.key === "Enter") applyStartBalance();
-        });
-
         function setRate(r, fromInput) {
           lastSaveAt = Date.now();
           r = parseFloat(r);
@@ -936,15 +889,9 @@
         }
 
         if (hadSaved) {
-          startInput.value = state.startBalance;
-          startEcho.textContent = "¥" + fmt(state.startBalance, 2);
           yuanCountEl.textContent = state.lastWholeYuan;
-          setRunning(state.running);
           lastSaveAt = Date.now();
           saveState();
-          if (state.running) {
-            setTimeout(function () { toast("已恢复上次的余额，继续往上涨"); }, 600);
-          }
         } else {
           /* 第一次打开：如果已经在上班时间里，直接按今天 8:00 起补算 */
           state.monthKey = new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0");
@@ -955,7 +902,7 @@
           if (_eb.seconds > 0) {
             state.earned = _eb.earnings;
             state.workedMs = _eb.seconds * 1000;
-            state.lastWholeYuan = Math.floor(state.earned);
+            state.lastWholeYuan = Math.floor(monthlyBalance());
           }
           lastSaveAt = Date.now();
           saveState();
