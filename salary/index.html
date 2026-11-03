@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>每秒工资余额</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #f4f1ea;
+        --panel: #fffdf8;
+        --panel-2: #efe9dc;
+        --ink: #1c2a22;
+        --ink-soft: #5c6a60;
+        --line: #ddd5c3;
+        --green: #177245;
+        --green-deep: #0d4d2e;
+        --amber: #e8a020;
+        --amber-soft: #fdf3dd;
+        --red: #c8452c;
+        --meter-bg: #12291d;
+        --meter-digit: #ffd968;
+        --meter-sub: #9fc7ae;
+        --shadow: 0 10px 30px rgba(28, 42, 34, .10);
+        --radius: 14px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0e1511;
+          --panel: #182019;
+          --panel-2: #1f2a20;
+          --ink: #e9efe7;
+          --ink-soft: #9db1a2;
+          --line: #2e3d31;
+          --green: #3fbb78;
+          --green-deep: #2a9d61;
+          --amber: #f0b23e;
+          --amber-soft: #2c2413;
+          --meter-bg: #0a1a11;
+          --meter-digit: #ffd968;
+          --meter-sub: #8fb89d;
+          --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        padding: 20px 16px 48px;
+      }
+      .wrap { max-width: 680px; margin: 0 auto; }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+      /* ---------- 顶部状态行 ---------- */
+      .topbar {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+      }
+      .status {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-size: 14px; font-weight: 700;
+      }
+      .dot {
+        width: 10px; height: 10px; border-radius: 50%;
+        background: var(--green); flex: none;
+      }
+      .dot.paused { background: var(--red); }
+      .dot.running { animation: pulse 1.2s ease-in-out infinite; }
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(23, 114, 69, .35); }
+        50% { box-shadow: 0 0 0 7px rgba(23, 114, 69, 0); }
+      }
+      .clock { font-size: 13px; color: var(--ink-soft); }
+      .clock b { color: var(--ink); font-weight: 600; }
+
+      /* ---------- 计价器主卡 ---------- */
+      .meter {
+        position: relative;
+        background: var(--meter-bg);
+        border-radius: 20px;
+        padding: 26px 22px 22px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .meter::before {
+        content: ""; position: absolute; inset: 0;
+        background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 4px);
+        pointer-events: none;
+      }
+      .meter-label {
+        color: var(--meter-sub); font-size: 13px; letter-spacing: .18em;
+        display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap;
+      }
+      .meter-label .persec { letter-spacing: 0; font-size: 13px; }
+      .meter-label .persec b { color: var(--meter-digit); font-weight: 600; }
+      .amount {
+        margin: 6px 0 2px;
+        color: var(--meter-digit);
+        font-weight: 700;
+        font-size: clamp(52px, 13.5vw, 92px);
+        line-height: 1.08;
+        letter-spacing: .01em;
+        text-shadow: 0 0 22px rgba(255, 217, 104, .25);
+        white-space: nowrap;
+      }
+      .amount .yuan { font-size: .45em; margin-right: .08em; }
+      .meter-sub {
+        display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+        color: var(--meter-sub); font-size: 13px; margin-top: 8px;
+      }
+      .meter-sub b { color: #e7f2ea; font-weight: 600; }
+      .goalbar {
+        margin-top: 16px; height: 10px; border-radius: 99px;
+        background: rgba(255, 255, 255, .12); overflow: hidden;
+      }
+      .goalbar > div {
+        height: 100%; width: 0%;
+        background: linear-gradient(90deg, var(--green) , var(--amber));
+        border-radius: 99px; transition: width .3s linear;
+      }
+      .goaltext { margin-top: 8px; font-size: 12.5px; color: var(--meter-sub); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+      .goaltext b { color: var(--meter-digit); font-weight: 600; }
+
+      /* 飘字层 */
+      .float-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+      .float-chip {
+        position: absolute; right: 26px; top: 64px;
+        color: var(--meter-digit); font-weight: 700; font-size: 20px;
+        animation: floatUp 1.6s ease-out forwards;
+      }
+      @keyframes floatUp {
+        0% { opacity: 0; transform: translateY(10px) scale(.8); }
+        15% { opacity: 1; transform: translateY(0) scale(1.05); }
+        100% { opacity: 0; transform: translateY(-72px) scale(1); }
+      }
+
+      /* ---------- 控制按钮 ---------- */
+      .controls { display: flex; gap: 10px; margin-top: 14px; }
+      .btn {
+        flex: 1; appearance: none; border: 0; cursor: pointer;
+        border-radius: var(--radius); padding: 14px 10px;
+        font: inherit; font-size: 16px; font-weight: 700;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        transition: transform .08s ease, opacity .15s ease;
+      }
+      .btn:active { transform: scale(.97); }
+      .btn-main { background: var(--green); color: #fff; }
+      .btn-main.pause-state { background: var(--amber); color: #3a2a05; }
+      .btn-ghost {
+        background: var(--panel); color: var(--ink);
+        border: 1.5px solid var(--line); flex: 0 0 136px;
+        white-space: nowrap;
+      }
+      .btn svg { width: 18px; height: 18px; flex: none; }
+
+      /* ---------- 时薪设置 ---------- */
+      .card {
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: var(--radius); padding: 18px; margin-top: 14px;
+        box-shadow: var(--shadow);
+      }
+      .card h2 { margin: 0 0 4px; font-size: 16px; font-weight: 900; }
+      .card .hint { margin: 0 0 14px; font-size: 13px; color: var(--ink-soft); }
+      .rate-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .chip {
+        appearance: none; cursor: pointer; font: inherit;
+        border: 1.5px solid var(--line); background: var(--panel);
+        color: var(--ink); border-radius: 99px; padding: 8px 16px;
+        font-size: 15px; font-weight: 700;
+      }
+      .chip.active { background: var(--green); border-color: var(--green); color: #fff; }
+      .rate-custom { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 14px; color: var(--ink-soft); }
+      .rate-custom input {
+        width: 84px; font: inherit; font-size: 16px; font-weight: 700; text-align: center;
+        padding: 8px 6px; border-radius: 10px;
+        border: 1.5px solid var(--line); background: var(--panel); color: var(--ink);
+      }
+      .rate-custom input:focus { outline: 2px solid var(--green); outline-offset: 1px; }
+
+      /* ---------- 起始余额 ---------- */
+      .start-block { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line); }
+      .start-block h3 { margin: 0 0 4px; font-size: 15px; font-weight: 900; }
+      .start-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .start-input {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-size: 15px; font-weight: 700; color: var(--ink-soft);
+        border: 1.5px solid var(--line); border-radius: 10px;
+        padding: 0 4px 0 12px; background: var(--panel);
+      }
+      .start-input input {
+        width: 110px; border: 0; background: transparent;
+        font: inherit; font-size: 16px; font-weight: 700; color: var(--ink);
+        padding: 9px 6px 9px 0; text-align: right;
+      }
+      .start-input input:focus { outline: none; }
+      .start-input:focus-within { outline: 2px solid var(--green); outline-offset: 1px; }
+      .btn-apply {
+        appearance: none; border: 0; cursor: pointer; font: inherit;
+        font-size: 15px; font-weight: 700;
+        background: var(--green); color: #fff;
+        border-radius: 10px; padding: 10px 18px;
+        transition: transform .08s ease;
+      }
+      .btn-apply:active { transform: scale(.97); }
+      .start-note { font-size: 12.5px; color: var(--ink-soft); margin-left: auto; }
+      .start-note b { color: var(--ink); font-weight: 700; }
+      @media (max-width: 480px) { .start-note { margin-left: 0; } }
+
+      /* ---------- 收入换算 ---------- */
+      .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 14px; }
+      .stat {
+        background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+        padding: 12px 6px 10px; text-align: center;
+      }
+      .stat .v { font-size: clamp(14px, 3.6vw, 19px); font-weight: 700; color: var(--green-deep); }
+      @media (prefers-color-scheme: dark) { .stat .v { color: var(--green); } }
+      .stat .k { font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+
+      /* ---------- 趣味换算 ---------- */
+      .fun-list { display: flex; flex-direction: column; gap: 14px; }
+      .fun-item .fi-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14.5px; }
+      .fun-item .fi-name { font-weight: 700; }
+      .fun-item .fi-name .price { color: var(--ink-soft); font-weight: 400; font-size: 12.5px; margin-left: 6px; }
+      .fun-item .fi-count { font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+      .fun-item .fi-count b { color: var(--green-deep); font-size: 16px; }
+      @media (prefers-color-scheme: dark) { .fun-item .fi-count b { color: var(--green); } }
+      .bar { height: 8px; border-radius: 99px; background: var(--panel-2); overflow: hidden; margin-top: 6px; }
+      .bar > div { height: 100%; width: 0%; background: var(--amber); border-radius: 99px; transition: width .3s linear; }
+      .fun-item.done .fi-count b { color: var(--amber); }
+
+      /* ---------- 里程碑 ---------- */
+      .toast-zone { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; width: max-content; max-width: 92vw; }
+      .toast {
+        background: var(--ink); color: var(--bg);
+        padding: 12px 20px; border-radius: 99px;
+        font-size: 15px; font-weight: 700; text-align: center;
+        box-shadow: 0 12px 30px rgba(0,0,0,.28);
+        animation: toastIn .35s cubic-bezier(.2, 1.4, .4, 1), toastOut .4s ease-in 3.4s forwards;
+        max-width: 92vw;
+      }
+      @media (prefers-color-scheme: dark) { .toast { background: var(--amber); color: #2c1e02; } }
+      @keyframes toastIn { from { opacity: 0; transform: translateY(16px) scale(.9); } to { opacity: 1; transform: none; } }
+      @keyframes toastOut { to { opacity: 0; transform: translateY(10px); } }
+
+      .quip {
+        margin-top: 14px; text-align: center; font-size: 13.5px; color: var(--ink-soft);
+        min-height: 20px; transition: opacity .4s ease;
+      }
+      .quip b { color: var(--ink); }
+
+      @media (max-width: 480px) {
+        .stats { grid-template-columns: repeat(3, 1fr); }
+        .stat:nth-child(4), .stat:nth-child(5) { grid-column: span 1; }
+        .rate-custom { margin-left: 0; }
+        .btn-ghost { flex-basis: 124px; font-size: 15px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .dot.running { animation: none; }
+        .float-chip { animation-duration: .01s; }
+        .goalbar > div, .bar > div { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <div class="topbar">
+        <span class="status"><span class="dot running" id="statusDot"></span><span id="statusText">上班中 · 工资正在入账</span></span>
+        <span class="clock">已工作 <b class="mono" id="elapsed">00:00:00</b></span>
+      </div>
+
+      <!-- 计价器 -->
+      <section class="meter" aria-label="当前已赚工资">
+        <div class="float-layer" id="floatLayer"></div>
+        <div class="meter-label">
+          <span>当前工资余额</span>
+          <span class="persec">每秒入账 <b class="mono" id="perSec">+¥0.0069</b></span>
+        </div>
+        <div class="amount mono"><span class="yuan">¥</span><span id="amount">0.0000</span></div>
+        <div class="meter-sub">
+          <span>时薪 <b class="mono" id="rateEcho">¥25.00</b></span>
+          <span>每分钟 <b class="mono" id="perMinEcho">¥0.42</b></span>
+          <span>已跨过 <b class="mono" id="yuanCount">0</b> 个整元</span>
+        </div>
+        <div class="goalbar"><div id="goalFill"></div></div>
+        <div class="goaltext">
+          <span>今日目标（8 小时）<b class="mono" id="goalEcho">¥200</b></span>
+          <span id="goalPct">已完成 0.0%</span>
+        </div>
+      </section>
+
+      <!-- 控制 -->
+      <div class="controls">
+        <button class="btn btn-main pause-state" id="toggleBtn" type="button">
+          <svg id="toggleIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+          <span id="toggleLabel">暂停一下（下班摸鱼）</span>
+        </button>
+        <button class="btn btn-ghost" id="resetBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+          重新开工
+        </button>
+      </div>
+
+      <!-- 工资设置 -->
+      <section class="card">
+        <h2>工资设置</h2>
+        <p class="hint">默认每小时 25 元。换个时薪，余额的上涨速度会立刻跟着变。</p>
+        <div class="rate-row" id="rateChips">
+          <button class="chip mono" type="button" data-rate="15">¥15</button>
+          <button class="chip mono active" type="button" data-rate="25">¥25</button>
+          <button class="chip mono" type="button" data-rate="35">¥35</button>
+          <button class="chip mono" type="button" data-rate="50">¥50</button>
+          <button class="chip mono" type="button" data-rate="100">¥100</button>
+          <label class="rate-custom">自定义
+            <input class="mono" id="rateInput" type="number" min="0" max="10000" step="0.5" value="25" inputmode="decimal" aria-label="自定义时薪（元每小时）" />
+            元/小时
+          </label>
+        </div>
+
+        <div class="start-block">
+          <h3>起始余额</h3>
+          <p class="hint">已经上班一阵子了？把目前已经赚到的钱填进来，点一下，余额就从这个数接着往上涨；之后点「重新开工」也会回到这个起始余额。</p>
+          <div class="start-row">
+            <label class="start-input">¥
+              <input class="mono" id="startInput" type="number" min="0" max="1000000" step="0.01" value="0" inputmode="decimal" aria-label="起始余额（元）" />
+            </label>
+            <button class="btn-apply" id="startBtn" type="button">从这个余额开始</button>
+            <span class="start-note">当前起始余额 <b class="mono" id="startEcho">¥0.00</b></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 收入速度 -->
+      <div class="stats" aria-label="收入速度换算">
+        <div class="stat"><div class="v mono" id="stSec">¥0.0069</div><div class="k">每秒</div></div>
+        <div class="stat"><div class="v mono" id="stMin">¥0.42</div><div class="k">每分钟</div></div>
+        <div class="stat"><div class="v mono" id="stHour">¥25</div><div class="k">每小时</div></div>
+        <div class="stat"><div class="v mono" id="stDay">¥200</div><div class="k">每天（8h）</div></div>
+        <div class="stat"><div class="v mono" id="stMonth">¥4,400</div><div class="k">每月（22天）</div></div>
+      </div>
+
+      <!-- 趣味换算 -->
+      <section class="card">
+        <h2>这笔钱能换什么</h2>
+        <p class="hint">余额实时换算成实物——看着它们一个个被「赚到手」，上班都有盼头了。</p>
+        <div class="fun-list" id="funList"></div>
+      </section>
+
+      <p class="quip" id="quip"></p>
+
+    </div>
+
+    <div class="toast-zone" id="toastZone" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var ITEMS = [
+          { name: "茶叶蛋", price: 2,   unit: "个", milestone: "第一颗茶叶蛋到手，茶叶蛋自由迈出第一步" },
+          { name: "冰可乐", price: 3.5, unit: "瓶", milestone: "一瓶冰可乐赚到了，快乐水自由" },
+          { name: "煎饼果子", price: 8, unit: "套", milestone: "煎饼果子加俩蛋，豪华早餐自由" },
+          { name: "奶茶", price: 16,  unit: "杯", milestone: "奶茶钱攒够了，下午茶有着落了" },
+          { name: "黄焖鸡米饭", price: 25, unit: "份", milestone: "一顿黄焖鸡到手——正好是你一小时的工资" },
+          { name: "电影票", price: 45,  unit: "张", milestone: "电影票赚到了，周末可以约一场" },
+          { name: "一顿小火锅", price: 120, unit: "顿", milestone: "小火锅自由达成，今晚可以犒劳自己" },
+          { name: "一整天工资", price: 200, unit: "天", milestone: "今日目标达成！一整天的工资全部入账" }
+        ];
+
+        var QUIPS = [
+          "你呼吸一次（约 4 秒），就有 <b>¥0.03</b> 到账",
+          "去接一杯水走个来回，一颗茶叶蛋就赚回来了",
+          "发个呆的一分钟，<b>¥0.42</b> 已经躺进余额",
+          "开完一个一小时的会，整整 <b>¥25</b> 入账",
+          "盯着余额看 10 秒，<b>¥0.07</b> 就这么看着它涨",
+          "午休睡一觉（按上班算）能涨 <b>¥12.50</b>，做梦都在赚钱",
+          "距离下一颗茶叶蛋，只差不到 5 分钟的工夫"
+        ];
+
+        var state = {
+          rate: 25,            // 元/小时
+          startBalance: 0,     // 起始余额（元）
+          earned: 0,           // 已赚金额
+          workedMs: 0,         // 已工作毫秒（不含暂停）
+          running: true,
+          lastTs: null,
+          lastWholeYuan: 0,
+          hitMilestones: {}
+        };
+
+        var $ = function (id) { return document.getElementById(id); };
+        var amountEl = $("amount"), elapsedEl = $("elapsed"),
+            perSecEl = $("perSec"), rateEchoEl = $("rateEcho"),
+            perMinEchoEl = $("perMinEcho"), yuanCountEl = $("yuanCount"),
+            goalFillEl = $("goalFill"), goalEchoEl = $("goalEcho"), goalPctEl = $("goalPct"),
+            statusDot = $("statusDot"), statusText = $("statusText"),
+            toggleBtn = $("toggleBtn"), toggleLabel = $("toggleLabel"), toggleIcon = $("toggleIcon"),
+            floatLayer = $("floatLayer"), toastZone = $("toastZone"), quipEl = $("quip");
+
+        function fmt(n, digits) {
+          return n.toLocaleString("zh-CN", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+        }
+        function fmtMoney(n) {
+          if (n >= 100) return "¥" + fmt(n, 0);
+          if (n >= 1) return "¥" + fmt(n, 2);
+          return "¥" + fmt(n, 4);
+        }
+
+        /* ---------- 趣味换算列表 ---------- */
+        var funRows = ITEMS.map(function (item, i) {
+          var row = document.createElement("div");
+          row.className = "fun-item";
+          row.innerHTML =
+            '<div class="fi-head">' +
+              '<span class="fi-name">' + item.name + '<span class="price">¥' + item.price + ' / ' + item.unit + '</span></span>' +
+              '<span class="fi-count">已赚到 <b class="mono" data-count>0</b> ' + item.unit + '<span data-next></span></span>' +
+            '</div>' +
+            '<div class="bar"><div data-bar></div></div>';
+          $("funList").appendChild(row);
+          return {
+            item: item,
+            row: row,
+            countEl: row.querySelector("[data-count]"),
+            nextEl: row.querySelector("[data-next]"),
+            barEl: row.querySelector("[data-bar]")
+          };
+        });
+
+        function renderFun() {
+          funRows.forEach(function (r) {
+            var count = Math.floor(state.earned / r.item.price);
+            var frac = (state.earned % r.item.price) / r.item.price;
+            r.countEl.textContent = count;
+            r.nextEl.textContent = count === 0
+              ? " · 还差 ¥" + fmt(r.item.price - state.earned, 2)
+              : " · 下一" + r.item.unit + "进度 " + Math.round(frac * 100) + "%";
+            r.barEl.style.width = (frac * 100).toFixed(1) + "%";
+            r.row.classList.toggle("done", count > 0);
+          });
+        }
+
+        /* ---------- 速率相关显示 ---------- */
+        function renderRate() {
+          var perSec = state.rate / 3600;
+          perSecEl.textContent = "+¥" + perSec.toFixed(4);
+          rateEchoEl.textContent = "¥" + fmt(state.rate, 2);
+          perMinEchoEl.textContent = "¥" + fmt(state.rate / 60, 2);
+          $("stSec").textContent = "¥" + perSec.toFixed(4);
+          $("stMin").textContent = "¥" + fmt(state.rate / 60, 2);
+          $("stHour").textContent = "¥" + fmt(state.rate, 0);
+          $("stDay").textContent = "¥" + fmt(state.rate * 8, 0);
+          $("stMonth").textContent = "¥" + fmt(state.rate * 8 * 22, 0);
+          var goal = state.rate * 8;
+          goalEchoEl.textContent = "¥" + fmt(goal, 0);
+          // 里程碑最后一项跟着日目标走
+          ITEMS[ITEMS.length - 1].price = goal;
+          funRows[funRows.length - 1].item.price = goal;
+          var priceEl = funRows[funRows.length - 1].row.querySelector(".price");
+          priceEl.textContent = "¥" + fmt(goal, 0) + " / 天";
+          primeMilestones();
+          renderFun();
+          renderGoal();
+        }
+
+        /* 起始余额已经覆盖的里程碑直接标记为达成，避免补弹庆祝 */
+        function primeMilestones() {
+          state.hitMilestones = {};
+          ITEMS.forEach(function (item, i) {
+            if (state.earned >= item.price) state.hitMilestones[i] = true;
+          });
+        }
+
+        function renderGoal() {
+          var goal = state.rate * 8;
+          var pct = goal > 0 ? Math.min(100, state.earned / goal * 100) : 0;
+          goalFillEl.style.width = pct.toFixed(2) + "%";
+          goalPctEl.textContent = "已完成 " + pct.toFixed(1) + "%";
+        }
+
+        /* ---------- 飘字 & 里程碑 ---------- */
+        function floatChip(text) {
+          var chip = document.createElement("div");
+          chip.className = "float-chip mono";
+          chip.textContent = text;
+          chip.style.right = (18 + Math.random() * 40) + "px";
+          floatLayer.appendChild(chip);
+          setTimeout(function () { chip.remove(); }, 1700);
+        }
+        function toast(msg) {
+          var t = document.createElement("div");
+          t.className = "toast";
+          t.textContent = msg;
+          toastZone.appendChild(t);
+          setTimeout(function () { t.remove(); }, 4000);
+        }
+        function checkMilestones() {
+          var whole = Math.floor(state.earned);
+          if (whole > state.lastWholeYuan) {
+            state.lastWholeYuan = whole;
+            yuanCountEl.textContent = whole;
+            floatChip("+¥1");
+          }
+          ITEMS.forEach(function (item, i) {
+            if (state.earned >= item.price && !state.hitMilestones[i]) {
+              state.hitMilestones[i] = true;
+              toast("达成：" + item.milestone);
+            }
+          });
+        }
+
+        /* ---------- 主循环 ---------- */
+        function tick(ts) {
+          if (state.lastTs === null) state.lastTs = ts;
+          var dt = ts - state.lastTs;
+          state.lastTs = ts;
+          if (state.running && dt > 0 && dt < 1000) {
+            state.workedMs += dt;
+            state.earned += state.rate / 3600 * (dt / 1000);
+          }
+          amountEl.textContent = fmt(state.earned, 4);
+          var s = Math.floor(state.workedMs / 1000);
+          var hh = String(Math.floor(s / 3600)).padStart(2, "0");
+          var mm = String(Math.floor(s % 3600 / 60)).padStart(2, "0");
+          var ss = String(s % 60).padStart(2, "0");
+          elapsedEl.textContent = hh + ":" + mm + ":" + ss;
+          renderGoal();
+          renderFun();
+          checkMilestones();
+          requestAnimationFrame(tick);
+        }
+
+        /* ---------- 趣味小字轮换 ---------- */
+        var quipIdx = 0;
+        function showQuip() {
+          quipEl.style.opacity = 0;
+          setTimeout(function () {
+            quipEl.innerHTML = QUIPS[quipIdx % QUIPS.length];
+            quipIdx++;
+            quipEl.style.opacity = 1;
+          }, 420);
+        }
+        quipEl.innerHTML = QUIPS[0]; quipIdx = 1;
+        setInterval(showQuip, 6000);
+
+        /* ---------- 控件 ---------- */
+        var ICON_PAUSE = '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';
+        var ICON_PLAY = '<path d="M8 5v14l11-7z"/>';
+        function setRunning(on) {
+          state.running = on;
+          statusDot.className = "dot " + (on ? "running" : "paused");
+          statusText.textContent = on ? "上班中 · 工资正在入账" : "已暂停 · 余额停止上涨";
+          toggleLabel.textContent = on ? "暂停一下（下班摸鱼）" : "继续上班";
+          toggleIcon.innerHTML = on ? ICON_PAUSE : ICON_PLAY;
+          toggleBtn.classList.toggle("pause-state", on);
+        }
+        toggleBtn.addEventListener("click", function () { setRunning(!state.running); });
+
+        $("resetBtn").addEventListener("click", function () {
+          state.earned = state.startBalance;
+          state.workedMs = 0;
+          state.lastWholeYuan = Math.floor(state.startBalance);
+          primeMilestones();
+          yuanCountEl.textContent = state.lastWholeYuan;
+          setRunning(true);
+          toast(state.startBalance > 0
+            ? "已回到起始余额 ¥" + fmt(state.startBalance, 2) + "，重新开工"
+            : "新的一天开始了，余额从零涨起");
+        });
+
+        /* ---------- 起始余额 ---------- */
+        var startInput = $("startInput"), startEcho = $("startEcho");
+        function applyStartBalance() {
+          var v = parseFloat(startInput.value);
+          if (isNaN(v) || v < 0) v = 0;
+          if (v > 1000000) v = 1000000;
+          startInput.value = v;
+          state.startBalance = v;
+          state.earned = v;
+          state.workedMs = 0;
+          state.lastWholeYuan = Math.floor(v);
+          yuanCountEl.textContent = state.lastWholeYuan;
+          primeMilestones();
+          startEcho.textContent = "¥" + fmt(v, 2);
+          renderGoal();
+          renderFun();
+          toast(v > 0
+            ? "已从 ¥" + fmt(v, 2) + " 开始计算，继续往上涨"
+            : "起始余额已归零，从 ¥0 开始计算");
+        }
+        $("startBtn").addEventListener("click", applyStartBalance);
+        startInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") applyStartBalance();
+        });
+
+        var chips = Array.prototype.slice.call(document.querySelectorAll("#rateChips .chip"));
+        var rateInput = $("rateInput");
+        function setRate(r, fromInput) {
+          r = parseFloat(r);
+          if (isNaN(r) || r < 0) r = 0;
+          if (r > 10000) r = 10000;
+          state.rate = r;
+          if (!fromInput) rateInput.value = r;
+          chips.forEach(function (c) {
+            c.classList.toggle("active", parseFloat(c.getAttribute("data-rate")) === r);
+          });
+          renderRate();
+        }
+        chips.forEach(function (c) {
+          c.addEventListener("click", function () { setRate(c.getAttribute("data-rate"), false); });
+        });
+        rateInput.addEventListener("input", function () { setRate(rateInput.value, true); });
+        rateInput.addEventListener("blur", function () { rateInput.value = state.rate; });
+
+        renderRate();
+        requestAnimationFrame(tick);
+      })();
+    </script>
+  </body>
+</html>
