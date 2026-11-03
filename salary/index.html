@@ -307,7 +307,7 @@
           重新开工
         </button>
       </div>
-      <p style="margin:10px 2px 0;font-size:12.5px;color:var(--ink-soft);text-align:center;">已自动保存 · 关掉再打开继续涨（同一手机、同一浏览器有效，暂停时不涨）</p>
+      <p style="margin:10px 2px 0;font-size:12.5px;color:var(--ink-soft);text-align:center;">工作时间 8:00-11:30，12:30-17:00 · 只在这两个时段记 · 已自动保存，关掉再打开继续涨（同一手机、同一浏览器有效）</p>
 
       <!-- 工资设置 -->
       <section class="card">
@@ -327,7 +327,7 @@
 
         <div class="start-block">
           <h3>起始余额</h3>
-          <p class="hint">已经上班一阵子了？把目前已经赚到的钱填进来，点一下，余额就从这个数接着往上涨；之后点「重新开工」也会回到这个起始余额。</p>
+          <p class="hint">已经上班一阵子了？把目前已经赚到的钱填进来，点一下，余额就从这个数接着往上涨；「重新开工」是单独从零开始，不走这个数。</p>
           <div class="start-row">
             <label class="start-input">¥
               <input class="mono" id="startInput" type="number" min="0" max="1000000" step="0.01" value="0" inputmode="decimal" aria-label="起始余额（元）" />
@@ -399,6 +399,43 @@
         /* ---------- 本地存档：关掉再打开接着涨 ---------- */
         var STORAGE_KEY = "salary-balance-v1";
         var lastSaveAt = 0;
+        /* 工作时间：每天 8:00-11:30，12:30-17:00，只在这两个时段里记 */
+        var WORK_WINDOWS = [[8 * 60, 11 * 60 + 30], [12 * 60 + 30, 17 * 60]];
+        function dateStr(d) {
+          return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        }
+        function minutesOfDay(d) { return d.getHours() * 60 + d.getMinutes(); }
+        function isWorkTime(d) {
+          var m = minutesOfDay(d);
+          return WORK_WINDOWS.some(function (w) { return m >= w[0] && m < w[1]; });
+        }
+        function workStatusLabel(d) {
+          if (isWorkTime(d)) return { active: true, text: "上班中 · 工资正在入账" };
+          var m = minutesOfDay(d);
+          if (m < 8 * 60) return { active: false, text: "还没到上班时间 · 8:00 开始记" };
+          if (m < 12 * 60 + 30) return { active: false, text: "午休中 · 12:30 继续记" };
+          if (m < 17 * 60) return { active: false, text: "午休中 · 12:30 继续记" };
+          return { active: false, text: "已下班 · 明天 8:00 再记" };
+        }
+        function workSecondsBetween(startMs, endMs) {
+          if (endMs <= startMs) return 0;
+          var total = 0;
+          var cur = new Date(startMs);
+          while (cur.getTime() < endMs) {
+            var dayStart = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
+            var nextDay = new Date(dayStart.getTime() + 86400000);
+            var segEnd = Math.min(endMs, nextDay.getTime());
+            WORK_WINDOWS.forEach(function (w) {
+              var ws = dayStart.getTime() + w[0] * 60000;
+              var we = dayStart.getTime() + w[1] * 60000;
+              var oStart = Math.max(startMs, ws);
+              var oEnd = Math.min(segEnd, we);
+              if (oEnd > oStart) total += (oEnd - oStart) / 1000;
+            });
+            cur = nextDay;
+          }
+          return total;
+        }
         function saveState() {
           try {
             var data = {
@@ -408,6 +445,7 @@
               workedMs: state.workedMs,
               running: state.running,
               lastWholeYuan: state.lastWholeYuan,
+              workDate: dateStr(new Date()),
               savedAt: Date.now()
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -422,16 +460,34 @@
             if (!d || typeof d.earned !== "number") return false;
             state.rate = d.rate || 25;
             state.startBalance = d.startBalance || 0;
-            state.earned = d.earned;
-            state.workedMs = d.workedMs || 0;
             state.running = d.running !== false;
-            state.lastWholeYuan = Math.floor(state.earned);
-            if (state.running && d.savedAt) {
-              var elapsedSec = (Date.now() - d.savedAt) / 1000;
-              if (elapsedSec > 0 && elapsedSec < 30 * 24 * 3600) {
-                state.earned += state.rate / 3600 * elapsedSec;
-                state.workedMs += elapsedSec * 1000;
-                state.lastWholeYuan = Math.floor(state.earned);
+            var today = dateStr(new Date());
+            if (d.workDate && d.workDate !== today) {
+              /* 跨天了，今天从零开始，只补算今天 8:00 以后的工作时间 */
+              state.earned = 0;
+              state.workedMs = 0;
+              state.lastWholeYuan = 0;
+              if (state.running) {
+                var dayStart = new Date();
+                dayStart.setHours(8, 0, 0, 0);
+                var sec = workSecondsBetween(dayStart.getTime(), Date.now());
+                if (sec > 0) {
+                  state.earned += state.rate / 3600 * sec;
+                  state.workedMs += sec * 1000;
+                  state.lastWholeYuan = Math.floor(state.earned);
+                }
+              }
+            } else {
+              state.earned = d.earned;
+              state.workedMs = d.workedMs || 0;
+              state.lastWholeYuan = Math.floor(state.earned);
+              if (state.running && d.savedAt) {
+                var sec2 = workSecondsBetween(d.savedAt, Date.now());
+                if (sec2 > 0 && sec2 < 8 * 3600) {
+                  state.earned += state.rate / 3600 * sec2;
+                  state.workedMs += sec2 * 1000;
+                  state.lastWholeYuan = Math.floor(state.earned);
+                }
               }
             }
             return true;
@@ -441,7 +497,7 @@
           if (!state.running) return;
           var now = Date.now();
           if (lastSaveAt && now > lastSaveAt) {
-            var s = (now - lastSaveAt) / 1000;
+            var s = workSecondsBetween(lastSaveAt, now);
             if (s > 0 && s < 3600) {
               state.earned += state.rate / 3600 * s;
               state.workedMs += s * 1000;
@@ -572,14 +628,22 @@
         }
 
         /* ---------- 主循环 ---------- */
+        function updateScheduleStatus() {
+          if (!state.running) return;
+          var st = workStatusLabel(new Date());
+          statusDot.className = "dot " + (st.active ? "running" : "paused");
+          statusText.textContent = st.text;
+        }
         function tick(ts) {
           if (state.lastTs === null) state.lastTs = ts;
           var dt = ts - state.lastTs;
           state.lastTs = ts;
-          if (state.running && dt > 0 && dt < 1000) {
+          var inWork = isWorkTime(new Date());
+          if (state.running && inWork && dt > 0 && dt < 1000) {
             state.workedMs += dt;
             state.earned += state.rate / 3600 * (dt / 1000);
           }
+          updateScheduleStatus();
           amountEl.textContent = fmt(state.earned, 4);
           var s = Math.floor(state.workedMs / 1000);
           var hh = String(Math.floor(s / 3600)).padStart(2, "0");
@@ -622,17 +686,15 @@
         toggleBtn.addEventListener("click", function () { setRunning(!state.running); });
 
         $("resetBtn").addEventListener("click", function () {
-          state.earned = state.startBalance;
+          state.earned = 0;
           state.workedMs = 0;
-          state.lastWholeYuan = Math.floor(state.startBalance);
+          state.lastWholeYuan = 0;
           primeMilestones();
-          yuanCountEl.textContent = state.lastWholeYuan;
+          yuanCountEl.textContent = 0;
           lastSaveAt = Date.now();
           setRunning(true);
           saveState();
-          toast(state.startBalance > 0
-            ? "已回到起始余额 ¥" + fmt(state.startBalance, 2) + "，重新开工"
-            : "新的一天开始了，余额从零涨起");
+          toast("已从零开始，重新开工");
         });
 
         /* ---------- 起始余额 ---------- */
@@ -696,6 +758,15 @@
             setTimeout(function () { toast("已恢复上次的余额，继续往上涨"); }, 600);
           }
         } else {
+          /* 第一次打开：如果已经在上班时间里，直接按今天 8:00 起补算 */
+          var _dayStart = new Date();
+          _dayStart.setHours(8, 0, 0, 0);
+          var _sec = workSecondsBetween(_dayStart.getTime(), Date.now());
+          if (_sec > 0) {
+            state.earned = state.rate / 3600 * _sec;
+            state.workedMs = _sec * 1000;
+            state.lastWholeYuan = Math.floor(state.earned);
+          }
           lastSaveAt = Date.now();
           saveState();
         }
