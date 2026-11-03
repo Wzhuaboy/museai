@@ -291,7 +291,7 @@
         </div>
         <div class="goalbar"><div id="goalFill"></div></div>
         <div class="goaltext">
-          <span>今日目标（8 小时）<b class="mono" id="goalEcho">¥200</b></span>
+          <span id="goalLabel">今日目标（8 小时）<b class="mono" id="goalEcho">¥200</b></span>
           <span id="goalPct">已完成 0.0%</span>
         </div>
       </section>
@@ -307,7 +307,7 @@
           重新开工
         </button>
       </div>
-      <p style="margin:10px 2px 0;font-size:12.5px;color:var(--ink-soft);text-align:center;">工作时间 8:00-11:30，12:30-17:00 · 只在这两个时段记 · 已自动保存，关掉再打开继续涨（同一手机、同一浏览器有效）</p>
+      <p style="margin:10px 2px 0;font-size:12.5px;color:var(--ink-soft);text-align:center;">工作时间 8:00-11:30，12:30-17:00 · 周日不上班 · 每天 8:00 自动开始 · 已自动保存，关掉再打开继续涨（同一手机、同一浏览器有效）</p>
 
       <!-- 工资设置 -->
       <section class="card">
@@ -338,13 +338,38 @@
         </div>
       </section>
 
+      <!-- 月薪换算 + 加班 -->
+      <section class="card">
+        <h2>月薪换算 · 每秒薪资</h2>
+        <p class="hint">输入月薪，按每月 26 天、每天 8 小时算，点一下就帮你算出时薪、每分钟、每秒多少钱，并直接用到上面的余额里。加班按同一时薪算。</p>
+        <div class="start-row">
+          <label class="start-input">¥
+            <input class="mono" id="monthlyInput" type="number" min="0" max="1000000" step="1" value="" placeholder="比如 6500" inputmode="decimal" aria-label="月薪（元）" />
+          </label>
+          <button class="btn-apply" id="calcBtn" type="button">计算每秒薪资</button>
+          <span class="start-note" id="calcResult">还没算</span>
+        </div>
+        <div class="start-block">
+          <h3>加班选择</h3>
+          <label style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;margin:8px 0;">
+            <input type="checkbox" id="eveningToggle" style="width:20px;height:20px;accent-color:var(--green);" />
+            今晚加班 18:00-21:00
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;margin:8px 0;">
+            <input type="checkbox" id="sundayToggle" style="width:20px;height:20px;accent-color:var(--green);" />
+            周日加班（周日也按 8:00-11:30、12:30-17:00 记）
+          </label>
+          <p class="hint" style="margin:8px 0 0;">周日默认不上班；今晚加班只算今天，过了今晚自动取消。</p>
+        </div>
+      </section>
+
       <!-- 收入速度 -->
       <div class="stats" aria-label="收入速度换算">
         <div class="stat"><div class="v mono" id="stSec">¥0.0069</div><div class="k">每秒</div></div>
         <div class="stat"><div class="v mono" id="stMin">¥0.42</div><div class="k">每分钟</div></div>
         <div class="stat"><div class="v mono" id="stHour">¥25</div><div class="k">每小时</div></div>
         <div class="stat"><div class="v mono" id="stDay">¥200</div><div class="k">每天（8h）</div></div>
-        <div class="stat"><div class="v mono" id="stMonth">¥4,400</div><div class="k">每月（22天）</div></div>
+        <div class="stat"><div class="v mono" id="stMonth">¥4,400</div><div class="k">每月（26天）</div></div>
       </div>
 
       <!-- 趣味换算 -->
@@ -393,28 +418,60 @@
           running: true,
           lastTs: null,
           lastWholeYuan: 0,
-          hitMilestones: {}
+          hitMilestones: {},
+          monthlySalary: 0,    // 月薪（元），按 26 天算
+          sundayOvertime: false, // 周日加班开关
+          eveningDates: []     // 今晚加班的日期列表，如 ["2026-11-04"]
         };
 
         /* ---------- 本地存档：关掉再打开接着涨 ---------- */
         var STORAGE_KEY = "salary-balance-v1";
         var lastSaveAt = 0;
-        /* 工作时间：每天 8:00-11:30，12:30-17:00，只在这两个时段里记 */
+        /* 工作时间：每天 8:00-11:30，12:30-17:00，只在这两个时段里记；周日不上班 */
         var WORK_WINDOWS = [[8 * 60, 11 * 60 + 30], [12 * 60 + 30, 17 * 60]];
+        var EVENING_WINDOW = [18 * 60, 21 * 60];
         function dateStr(d) {
           return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
         }
         function minutesOfDay(d) { return d.getHours() * 60 + d.getMinutes(); }
+        function isWorkDay(d) {
+          if (d.getDay() === 0) return !!state.sundayOvertime;
+          return true;
+        }
+        function isEveningOvertime(d) {
+          return state.eveningDates.indexOf(dateStr(d)) !== -1;
+        }
+        function getWorkWindowsForDay(d) {
+          var wins = [];
+          if (isWorkDay(d)) wins = wins.concat(WORK_WINDOWS);
+          if (isEveningOvertime(d)) wins.push(EVENING_WINDOW);
+          return wins;
+        }
+        function todayWorkHours() {
+          var wins = getWorkWindowsForDay(new Date());
+          var mins = 0;
+          wins.forEach(function (w) { mins += w[1] - w[0]; });
+          return mins / 60;
+        }
         function isWorkTime(d) {
           var m = minutesOfDay(d);
-          return WORK_WINDOWS.some(function (w) { return m >= w[0] && m < w[1]; });
+          return getWorkWindowsForDay(d).some(function (w) { return m >= w[0] && m < w[1]; });
         }
         function workStatusLabel(d) {
-          if (isWorkTime(d)) return { active: true, text: "上班中 · 工资正在入账" };
+          if (d.getDay() === 0 && !state.sundayOvertime && !isEveningOvertime(d)) return { active: false, text: "周日休息 · 明天 8:00 再记" };
+          if (isWorkTime(d)) {
+            var mm = minutesOfDay(d);
+            if (mm >= EVENING_WINDOW[0] && mm < EVENING_WINDOW[1]) return { active: true, text: "今晚加班中 · 21:00 结束" };
+            return { active: true, text: "上班中 · 工资正在入账" };
+          }
           var m = minutesOfDay(d);
           if (m < 8 * 60) return { active: false, text: "还没到上班时间 · 8:00 开始记" };
           if (m < 12 * 60 + 30) return { active: false, text: "午休中 · 12:30 继续记" };
           if (m < 17 * 60) return { active: false, text: "午休中 · 12:30 继续记" };
+          if (m < 18 * 60) {
+            if (isEveningOvertime(d)) return { active: false, text: "已下班 · 今晚 18:00 加班" };
+            return { active: false, text: "已下班 · 明天 8:00 再记" };
+          }
           return { active: false, text: "已下班 · 明天 8:00 再记" };
         }
         function workSecondsBetween(startMs, endMs) {
@@ -425,7 +482,7 @@
             var dayStart = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
             var nextDay = new Date(dayStart.getTime() + 86400000);
             var segEnd = Math.min(endMs, nextDay.getTime());
-            WORK_WINDOWS.forEach(function (w) {
+            getWorkWindowsForDay(dayStart).forEach(function (w) {
               var ws = dayStart.getTime() + w[0] * 60000;
               var we = dayStart.getTime() + w[1] * 60000;
               var oStart = Math.max(startMs, ws);
@@ -446,6 +503,9 @@
               running: state.running,
               lastWholeYuan: state.lastWholeYuan,
               workDate: dateStr(new Date()),
+              monthlySalary: state.monthlySalary,
+              sundayOvertime: state.sundayOvertime,
+              eveningDates: state.eveningDates,
               savedAt: Date.now()
             };
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -461,6 +521,9 @@
             state.rate = d.rate || 25;
             state.startBalance = d.startBalance || 0;
             state.running = d.running !== false;
+            state.monthlySalary = d.monthlySalary || 0;
+            state.sundayOvertime = !!d.sundayOvertime;
+            state.eveningDates = Array.isArray(d.eveningDates) ? d.eveningDates : [];
             var today = dateStr(new Date());
             if (d.workDate && d.workDate !== today) {
               /* 跨天了，今天从零开始，只补算今天 8:00 以后的工作时间 */
@@ -483,7 +546,7 @@
               state.lastWholeYuan = Math.floor(state.earned);
               if (state.running && d.savedAt) {
                 var sec2 = workSecondsBetween(d.savedAt, Date.now());
-                if (sec2 > 0 && sec2 < 8 * 3600) {
+                if (sec2 > 0 && sec2 < 11 * 3600) {
                   state.earned += state.rate / 3600 * sec2;
                   state.workedMs += sec2 * 1000;
                   state.lastWholeYuan = Math.floor(state.earned);
@@ -567,9 +630,14 @@
           $("stSec").textContent = "¥" + perSec.toFixed(4);
           $("stMin").textContent = "¥" + fmt(state.rate / 60, 2);
           $("stHour").textContent = "¥" + fmt(state.rate, 0);
-          $("stDay").textContent = "¥" + fmt(state.rate * 8, 0);
-          $("stMonth").textContent = "¥" + fmt(state.rate * 8 * 22, 0);
-          var goal = state.rate * 8;
+          var hoursToday = todayWorkHours();
+          $("stDay").textContent = "¥" + fmt(state.rate * hoursToday, 0);
+          $("stMonth").textContent = state.monthlySalary > 0
+            ? "¥" + fmt(state.monthlySalary, 0)
+            : "¥" + fmt(state.rate * 8 * 26, 0);
+          var goal = state.rate * hoursToday;
+          var goalLabel = $("goalLabel");
+          if (goalLabel) goalLabel.childNodes[0].textContent = "今日目标（" + hoursToday + " 小时）";
           goalEchoEl.textContent = "¥" + fmt(goal, 0);
           // 里程碑最后一项跟着日目标走
           ITEMS[ITEMS.length - 1].price = goal;
@@ -590,7 +658,7 @@
         }
 
         function renderGoal() {
-          var goal = state.rate * 8;
+          var goal = state.rate * todayWorkHours();
           var pct = goal > 0 ? Math.min(100, state.earned / goal * 100) : 0;
           goalFillEl.style.width = pct.toFixed(2) + "%";
           goalPctEl.textContent = "已完成 " + pct.toFixed(1) + "%";
@@ -773,6 +841,50 @@
         document.addEventListener("visibilitychange", function () { if (document.hidden) saveState(); });
         window.addEventListener("beforeunload", saveState);
         window.addEventListener("pagehide", saveState);
+
+        /* ---------- 月薪换算 + 加班 ---------- */
+        var monthlyInput = $("monthlyInput"), calcResult = $("calcResult"),
+            eveningToggle = $("eveningToggle"), sundayToggle = $("sundayToggle");
+        function calcResultText() {
+          if (!state.monthlySalary) return "还没算";
+          var daily = state.monthlySalary / 26;
+          var hourly = daily / 8;
+          var perSec = hourly / 3600;
+          return "日薪 ¥" + fmt(daily, 2) + " · 时薪 ¥" + fmt(hourly, 2) + " · 每秒 ¥" + perSec.toFixed(4);
+        }
+        function applyMonthly() {
+          var v = parseFloat(monthlyInput.value);
+          if (isNaN(v) || v <= 0) { toast("先填一下月薪，比如 6500"); return; }
+          if (v > 1000000) v = 1000000;
+          state.monthlySalary = v;
+          var hourly = v / 26 / 8;
+          calcResult.textContent = calcResultText();
+          setRate(hourly, false);
+          toast("已按月薪 ¥" + fmt(v, 0) + " 算好，每秒 ¥" + (hourly / 3600).toFixed(4));
+        }
+        $("calcBtn").addEventListener("click", applyMonthly);
+        monthlyInput.addEventListener("keydown", function (e) { if (e.key === "Enter") applyMonthly(); });
+        eveningToggle.addEventListener("change", function () {
+          var today = dateStr(new Date());
+          var idx = state.eveningDates.indexOf(today);
+          if (eveningToggle.checked && idx === -1) state.eveningDates.push(today);
+          if (!eveningToggle.checked && idx !== -1) state.eveningDates.splice(idx, 1);
+          saveState();
+          renderRate();
+          toast(eveningToggle.checked ? "今晚加班已选，18:00-21:00 也会记" : "今晚不加班了，18:00 后不记");
+        });
+        sundayToggle.addEventListener("change", function () {
+          state.sundayOvertime = !!sundayToggle.checked;
+          saveState();
+          renderRate();
+          toast(state.sundayOvertime ? "周日加班已选，周日也按上班时间记" : "周日不加班了，周日休息");
+        });
+        if (state.monthlySalary > 0) {
+          monthlyInput.value = state.monthlySalary;
+          calcResult.textContent = calcResultText();
+        }
+        eveningToggle.checked = isEveningOvertime(new Date());
+        sundayToggle.checked = !!state.sundayOvertime;
 
         renderRate();
         requestAnimationFrame(tick);
