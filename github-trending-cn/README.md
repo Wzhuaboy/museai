@@ -47,6 +47,12 @@ github-trending-cn/
 
 ## 索引
 
+### 2026-11-03
+
+- 日榜第 1 名：[agent-desktop：让 AI agent 直接操作你的桌面应用](2026-11-03/vercel-labs-agent-desktop.md)（vercel-labs/agent-desktop）
+- 周榜第 3 名：[impeccable：给编程助手的设计词汇表](2026-11-03/pbakaus-impeccable.md)（pbakaus/impeccable）
+- 月榜第 1 名：[rea：用 agent 逆向工程任何东西](2026-11-03/morluto-rea.md)（morluto/rea）
+
 ### 2026-11-02
 
 - 日榜第 1 名：[claude-mem：给 AI 编程助手加长期记忆](2026-11-02/thedotmack-claude-mem.md)（thedotmack/claude-mem）
