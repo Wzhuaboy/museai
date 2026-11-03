@@ -307,6 +307,7 @@
           重新开工
         </button>
       </div>
+      <p style="margin:10px 2px 0;font-size:12.5px;color:var(--ink-soft);text-align:center;">已自动保存 · 关掉再打开继续涨（同一手机、同一浏览器有效，暂停时不涨）</p>
 
       <!-- 工资设置 -->
       <section class="card">
@@ -394,6 +395,61 @@
           lastWholeYuan: 0,
           hitMilestones: {}
         };
+
+        /* ---------- 本地存档：关掉再打开接着涨 ---------- */
+        var STORAGE_KEY = "salary-balance-v1";
+        var lastSaveAt = 0;
+        function saveState() {
+          try {
+            var data = {
+              rate: state.rate,
+              startBalance: state.startBalance,
+              earned: state.earned,
+              workedMs: state.workedMs,
+              running: state.running,
+              lastWholeYuan: state.lastWholeYuan,
+              savedAt: Date.now()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            lastSaveAt = Date.now();
+          } catch (e) { /* 无痕或存储被禁时静默跳过，不影响计时 */ }
+        }
+        function loadSaved() {
+          try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            var d = JSON.parse(raw);
+            if (!d || typeof d.earned !== "number") return false;
+            state.rate = d.rate || 25;
+            state.startBalance = d.startBalance || 0;
+            state.earned = d.earned;
+            state.workedMs = d.workedMs || 0;
+            state.running = d.running !== false;
+            state.lastWholeYuan = Math.floor(state.earned);
+            if (state.running && d.savedAt) {
+              var elapsedSec = (Date.now() - d.savedAt) / 1000;
+              if (elapsedSec > 0 && elapsedSec < 30 * 24 * 3600) {
+                state.earned += state.rate / 3600 * elapsedSec;
+                state.workedMs += elapsedSec * 1000;
+                state.lastWholeYuan = Math.floor(state.earned);
+              }
+            }
+            return true;
+          } catch (e) { return false; }
+        }
+        function settleElapsed() {
+          if (!state.running) return;
+          var now = Date.now();
+          if (lastSaveAt && now > lastSaveAt) {
+            var s = (now - lastSaveAt) / 1000;
+            if (s > 0 && s < 3600) {
+              state.earned += state.rate / 3600 * s;
+              state.workedMs += s * 1000;
+            }
+          }
+          lastSaveAt = now;
+        }
+        var hadSaved = loadSaved();
 
         var $ = function (id) { return document.getElementById(id); };
         var amountEl = $("amount"), elapsedEl = $("elapsed"),
@@ -533,6 +589,7 @@
           renderGoal();
           renderFun();
           checkMilestones();
+          if (Date.now() - lastSaveAt > 1000) saveState();
           requestAnimationFrame(tick);
         }
 
@@ -553,12 +610,14 @@
         var ICON_PAUSE = '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';
         var ICON_PLAY = '<path d="M8 5v14l11-7z"/>';
         function setRunning(on) {
+          if (on && !state.running) lastSaveAt = Date.now();
           state.running = on;
           statusDot.className = "dot " + (on ? "running" : "paused");
           statusText.textContent = on ? "上班中 · 工资正在入账" : "已暂停 · 余额停止上涨";
           toggleLabel.textContent = on ? "暂停一下（下班摸鱼）" : "继续上班";
           toggleIcon.innerHTML = on ? ICON_PAUSE : ICON_PLAY;
           toggleBtn.classList.toggle("pause-state", on);
+          saveState();
         }
         toggleBtn.addEventListener("click", function () { setRunning(!state.running); });
 
@@ -568,7 +627,9 @@
           state.lastWholeYuan = Math.floor(state.startBalance);
           primeMilestones();
           yuanCountEl.textContent = state.lastWholeYuan;
+          lastSaveAt = Date.now();
           setRunning(true);
+          saveState();
           toast(state.startBalance > 0
             ? "已回到起始余额 ¥" + fmt(state.startBalance, 2) + "，重新开工"
             : "新的一天开始了，余额从零涨起");
@@ -590,6 +651,8 @@
           startEcho.textContent = "¥" + fmt(v, 2);
           renderGoal();
           renderFun();
+          lastSaveAt = Date.now();
+          saveState();
           toast(v > 0
             ? "已从 ¥" + fmt(v, 2) + " 开始计算，继续往上涨"
             : "起始余额已归零，从 ¥0 开始计算");
@@ -602,6 +665,7 @@
         var chips = Array.prototype.slice.call(document.querySelectorAll("#rateChips .chip"));
         var rateInput = $("rateInput");
         function setRate(r, fromInput) {
+          lastSaveAt = Date.now();
           r = parseFloat(r);
           if (isNaN(r) || r < 0) r = 0;
           if (r > 10000) r = 10000;
@@ -611,12 +675,33 @@
             c.classList.toggle("active", parseFloat(c.getAttribute("data-rate")) === r);
           });
           renderRate();
+          saveState();
         }
         chips.forEach(function (c) {
           c.addEventListener("click", function () { setRate(c.getAttribute("data-rate"), false); });
         });
         rateInput.addEventListener("input", function () { setRate(rateInput.value, true); });
         rateInput.addEventListener("blur", function () { rateInput.value = state.rate; });
+
+        if (hadSaved) {
+          startInput.value = state.startBalance;
+          rateInput.value = state.rate;
+          startEcho.textContent = "¥" + fmt(state.startBalance, 2);
+          yuanCountEl.textContent = state.lastWholeYuan;
+          chips.forEach(function (c) { c.classList.toggle("active", parseFloat(c.getAttribute("data-rate")) === state.rate); });
+          setRunning(state.running);
+          lastSaveAt = Date.now();
+          saveState();
+          if (state.running) {
+            setTimeout(function () { toast("已恢复上次的余额，继续往上涨"); }, 600);
+          }
+        } else {
+          lastSaveAt = Date.now();
+          saveState();
+        }
+        document.addEventListener("visibilitychange", function () { if (document.hidden) saveState(); });
+        window.addEventListener("beforeunload", saveState);
+        window.addEventListener("pagehide", saveState);
 
         renderRate();
         requestAnimationFrame(tick);
