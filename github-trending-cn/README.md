@@ -47,6 +47,12 @@ github-trending-cn/
 
 ## 索引
 
+### 2026-11-04
+
+- 日榜第 3 名：[worktrunk：给并行跑的 AI agent 一人一个工作区](2026-11-04/max-sixty-worktrunk.md)（max-sixty/worktrunk）
+- 周榜第 3 名：[t3code：Agent 的统一遥控器](2026-11-04/pingdotgg-t3code.md)（pingdotgg/t3code）
+- 月榜第 4 名：[hyperframes：写 HTML 就能渲染视频](2026-11-04/heygen-com-hyperframes.md)（heygen-com/hyperframes）
+
 ### 2026-11-03
 
 - 日榜第 1 名：[agent-desktop：让 AI agent 直接操作你的桌面应用](2026-11-03/vercel-labs-agent-desktop.md)（vercel-labs/agent-desktop）
