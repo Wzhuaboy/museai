@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href="data:," />
-    <title>流动工资</title>
+    <title>每秒工资余额</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet" />
@@ -53,23 +53,25 @@
         color: var(--ink);
         font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
         -webkit-font-smoothing: antialiased;
-        padding: 20px 16px 48px;
+        padding: 12px 12px 12px;
+        min-height: 100dvh;
+        overflow-x: hidden;
       }
-      .wrap { max-width: 680px; margin: 0 auto; }
+      .wrap { max-width: 680px; margin: 0 auto; min-height: calc(100dvh - 24px); display: flex; flex-direction: column; gap: 8px; }
       .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: tabular-nums; }
 
       /* ---------- 顶部状态行 ---------- */
       .topbar {
         display: flex; align-items: center; justify-content: space-between;
-        gap: 12px; flex-wrap: wrap; margin-bottom: 14px;
+        gap: 12px; flex-wrap: wrap; margin-bottom: 0;
       }
       .top-grid {
-        display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-        margin-bottom: 14px;
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+        margin-bottom: 0;
       }
       .top-cell {
         background: var(--panel); border: 1px solid var(--line);
-        border-radius: var(--radius); padding: 12px 10px;
+        border-radius: var(--radius); padding: 8px 8px;
         box-shadow: var(--shadow); min-width: 0;
       }
       .top-label { font-size: 12.5px; font-weight: 900; color: var(--ink-soft); margin-bottom: 6px; }
@@ -109,12 +111,14 @@
 
       /* ---------- 计价器主卡 ---------- */
       .meter {
+        --big: clamp(52px, 13.5vw, 84px);
         position: relative;
         background: var(--meter-bg);
         border-radius: 20px;
-        padding: 26px 22px 22px;
+        padding: 18px 18px 14px;
         box-shadow: var(--shadow);
         overflow: hidden;
+        flex: none;
       }
       .meter::before {
         content: ""; position: absolute; inset: 0;
@@ -131,13 +135,51 @@
         margin: 6px 0 2px;
         color: var(--meter-digit);
         font-weight: 700;
-        font-size: clamp(52px, 13.5vw, 92px);
+        font-size: var(--big);
         line-height: 1.08;
         letter-spacing: .01em;
         text-shadow: 0 0 22px rgba(255, 217, 104, .25);
         white-space: nowrap;
       }
       .amount .yuan { font-size: .45em; margin-right: .08em; }
+      .month-line {
+        color: var(--meter-sub);
+        font-size: calc(var(--big) / 6);
+        line-height: 1.4;
+        margin-top: 2px;
+      }
+      .month-line b { color: var(--meter-digit); font-weight: 600; }
+      .muyu-wrap {
+        position: relative;
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: var(--radius); padding: 10px 12px;
+        box-shadow: var(--shadow); flex: none;
+        display: flex; align-items: center; gap: 12px;
+      }
+      .muyu-btn {
+        appearance: none; border: 0; cursor: pointer; background: transparent;
+        display: flex; align-items: center; gap: 10px; padding: 4px 6px;
+        border-radius: 12px; transition: transform .08s ease;
+      }
+      .muyu-btn:active { transform: scale(.93); }
+      .muyu-btn svg { width: 64px; height: 44px; flex: none; }
+      .muyu-btn:active svg { transform: rotate(-4deg) scale(.96); }
+      .muyu-label { font-size: 16px; font-weight: 900; color: var(--ink); }
+      .muyu-merit { margin-left: auto; font-size: 14px; color: var(--ink-soft); text-align: right; }
+      .muyu-merit b { color: var(--amber); font-size: 20px; font-weight: 900; }
+      .muyu-layer { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+      .merit-float {
+        position: absolute; left: 50px; top: 6px;
+        color: var(--amber); font-weight: 900; font-size: 18px;
+        animation: meritUp 1s ease-out forwards; pointer-events: none;
+      }
+      @keyframes meritUp {
+        0% { opacity: 0; transform: translateY(8px) scale(.8); }
+        20% { opacity: 1; transform: translateY(0) scale(1.1); }
+        100% { opacity: 0; transform: translateY(-44px) scale(1); }
+      }
+      details.more { flex: none; }
+      details.more summary { cursor: pointer; font-size: 13px; color: var(--ink-soft); text-align: center; padding: 4px; }
       .meter-sub {
         display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
         color: var(--meter-sub); font-size: 13px; margin-top: 8px;
@@ -328,14 +370,15 @@
         <span class="clock">已工作 <b class="mono" id="elapsed">00:00:00</b> · <span id="countdown">下班倒计时 --:--:--</span></span>
       </div>
 
-      <!-- 计价器 -->
-      <section class="meter" aria-label="当前已赚工资">
+      <!-- 计价器：大屏今日已赚，每秒变化 -->
+      <section class="meter" aria-label="今日已赚工资">
         <div class="float-layer" id="floatLayer"></div>
         <div class="meter-label">
-          <span>本月工资余额</span>
+          <span>今日已赚</span>
           <span class="persec">每秒入账 <b class="mono" id="perSec">+¥0.0069</b></span>
         </div>
         <div class="amount mono"><span class="yuan">¥</span><span id="amount">0.0000</span></div>
+        <div class="month-line">本月已赚 <b class="mono" id="monthSmall">¥0.00</b></div>
         <div class="meter-sub">
           <span>时薪 <b class="mono" id="rateEcho">¥25.00</b></span>
           <span>每分钟 <b class="mono" id="perMinEcho">¥0.42</b></span>
@@ -348,14 +391,19 @@
         </div>
       </section>
 
-      <!-- 今日已赚 / 本月已赚 -->
-      <div class="stats" aria-label="今日和本月已赚">
-        <div class="stat"><div class="v mono" id="todayEarned">¥0.00</div><div class="k">今日已赚</div></div>
-        <div class="stat"><div class="v mono" id="monthEarned">¥0.00</div><div class="k">本月已赚</div></div>
+      <!-- 敲木鱼 -->
+      <div class="muyu-wrap">
+        <button class="muyu-btn" id="muyuBtn" type="button" aria-label="敲木鱼">
+          <svg viewBox="0 0 100 70" aria-hidden="true"><path d="M10 35 Q10 10 50 10 Q90 10 90 35 Q90 60 50 60 Q10 60 10 35" fill="#9C6644" stroke="#6B4226" stroke-width="2"/><path d="M25 35 Q50 20 75 35" fill="none" stroke="#5C3A21" stroke-width="3" stroke-linecap="round"/><circle cx="30" cy="32" r="3" fill="#3A2415"/></svg>
+          <span class="muyu-label">敲木鱼</span>
+        </button>
+        <div class="muyu-merit">累计功德<br><b class="mono" id="meritCount">0</b></div>
+        <div class="muyu-layer" id="muyuLayer"></div>
       </div>
 
       <p style="margin:10px 2px 0;font-size:12.5px;color:var(--ink-soft);text-align:center;">底薪对应周一到周六 8:00-11:30，12:30-17:00 · 加班只记晚上 18:00-21:00，按 ¥25/小时 · 周日也可以加班 · 每天 8:00 自动开始 · 已自动保存，关掉再打开继续涨（同一手机、同一浏览器有效）</p>
 
+      <details class="more"><summary>更多明细 · 收入换算 · 能换什么</summary>
       <!-- 本月明细（参考：考勤核算的应发/实发拆解） -->
       <section class="card">
         <h2>本月明细</h2>
@@ -385,6 +433,8 @@
       </section>
 
       <p class="quip" id="quip"></p>
+      </details>
+
 
     </div>
 
@@ -627,19 +677,19 @@
                 if (eb.seconds > 0) {
                   state.earned += eb.earnings;
                   state.workedMs += eb.seconds * 1000;
-                  state.lastWholeYuan = Math.floor(monthlyBalance());
+                  state.lastWholeYuan = Math.floor(state.earned);
                 }
               }
             } else {
               state.earned = d.earned;
               state.workedMs = d.workedMs || 0;
-              state.lastWholeYuan = Math.floor(monthlyBalance());
+              state.lastWholeYuan = Math.floor(state.earned);
               if (d.savedAt) {
                 var eb2 = workEarningsBetween(d.savedAt, Date.now());
                 if (eb2.seconds > 0 && eb2.seconds < 11 * 3600) {
                   state.earned += eb2.earnings;
                   state.workedMs += eb2.seconds * 1000;
-                  state.lastWholeYuan = Math.floor(monthlyBalance());
+                  state.lastWholeYuan = Math.floor(state.earned);
                 }
               }
             }
@@ -697,7 +747,7 @@
         });
 
         function renderFun() {
-          var bal = monthlyBalance();
+          var bal = state.earned;
           funRows.forEach(function (r) {
             var count = Math.floor(bal / r.item.price);
             var frac = (bal % r.item.price) / r.item.price;
@@ -742,7 +792,7 @@
         /* 起始余额已经覆盖的里程碑直接标记为达成，避免补弹庆祝 */
         function primeMilestones() {
           state.hitMilestones = {};
-          var bal = monthlyBalance();
+          var bal = state.earned;
           ITEMS.forEach(function (item, i) {
             if (bal >= item.price) state.hitMilestones[i] = true;
           });
@@ -768,9 +818,8 @@
         }
 
         function renderEarned() {
-          var todayEl = $("todayEarned"), monthEl = $("monthEarned");
-          if (todayEl) todayEl.textContent = "¥" + fmt(state.earned, 2);
-          if (monthEl) monthEl.textContent = "¥" + fmt(monthlyBalance(), 2);
+          var ms = $("monthSmall");
+          if (ms) ms.textContent = "¥" + fmt(monthlyBalance(), 2);
         }
 
         function renderGoal() {
@@ -798,7 +847,7 @@
           setTimeout(function () { t.remove(); }, 4000);
         }
         function checkMilestones() {
-          var bal = monthlyBalance();
+          var bal = state.earned;
           var whole = Math.floor(bal);
           if (whole > state.lastWholeYuan) {
             state.lastWholeYuan = whole;
@@ -852,7 +901,7 @@
           }
           updateScheduleStatus();
           renderCountdown();
-          amountEl.textContent = fmt(monthlyBalance(), 4);
+          amountEl.textContent = fmt(state.earned, 4);
           var s = Math.floor(state.workedMs / 1000);
           var hh = String(Math.floor(s / 3600)).padStart(2, "0");
           var mm = String(Math.floor(s % 3600 / 60)).padStart(2, "0");
@@ -902,7 +951,7 @@
           if (_eb.seconds > 0) {
             state.earned = _eb.earnings;
             state.workedMs = _eb.seconds * 1000;
-            state.lastWholeYuan = Math.floor(monthlyBalance());
+            state.lastWholeYuan = Math.floor(state.earned);
           }
           lastSaveAt = Date.now();
           saveState();
@@ -1028,6 +1077,24 @@
         otNightsInput.value = state.otNights || 0;
         otSundaysInput.value = state.otSundays || 0;
         renderTopRow();
+
+        /* ---------- 敲木鱼：功德 +1，浮动渐退，累计保存 ---------- */
+        var MERIT_KEY = "salary-merit-v1";
+        var meritCount = 0;
+        try { meritCount = parseInt(localStorage.getItem(MERIT_KEY) || "0", 10) || 0; } catch (e) { meritCount = 0; }
+        var meritEl = $("meritCount"), muyuBtn = $("muyuBtn"), muyuLayer = $("muyuLayer");
+        if (meritEl) meritEl.textContent = meritCount;
+        if (muyuBtn) muyuBtn.addEventListener("click", function () {
+          meritCount++;
+          if (meritEl) meritEl.textContent = meritCount;
+          try { localStorage.setItem(MERIT_KEY, String(meritCount)); } catch (e) {}
+          var f = document.createElement("div");
+          f.className = "merit-float mono";
+          f.textContent = "功德 +1";
+          f.style.left = (30 + Math.random() * 40) + "px";
+          muyuLayer.appendChild(f);
+          setTimeout(function () { f.remove(); }, 1000);
+        });
 
         renderRate();
         requestAnimationFrame(tick);
