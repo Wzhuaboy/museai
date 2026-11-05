@@ -50,7 +50,7 @@
   <h1>数字合并</h1>
   <p class="sub">点格子 +1；上下左右连着的相同数字满 3 个就合并成一个 +1 的新方块，<br>
   留在你点的那格（连锁合并时留在该组最左上的那格），合完立刻再扫全盘，<br>
-  直到没有可合并的为止。2 个相连不合并。</p>
+  直到没有可合并的为止。2 个相连不合并。合掉的格子留空，不会变成 0。</p>
   <div class="board" id="board"></div>
   <div class="actions"><button id="resetBtn" type="button">重置本局</button></div>
 </div>
@@ -80,6 +80,10 @@
   ];
   var HUES = [280, 210, 160, 320, 20, 190, 250, 100];
 
+  // 盘面上永远不出现 0：空格子用 null 表示、渲染为空白且不可点；
+  // 数字只从 1 起往上加，下面三处把任何非正数都按空格子处理
+  function isEmpty(v) { return v === null || v <= 0; }
+
   var board = clone(INITIAL);
   var busy = false;
   var boardEl = document.getElementById("board");
@@ -104,7 +108,7 @@
         var cell = document.createElement("div");
         cell.className = "cell";
         var v = board[r][c];
-        if (v === null) {
+        if (isEmpty(v)) {
           cell.classList.add("empty");
         } else {
           var col = colorFor(v);
@@ -134,7 +138,7 @@
     for (var sr = 0; sr < ROWS; sr++) {
       for (var sc = 0; sc < COLS; sc++) {
         var v = board[sr][sc];
-        if (v === null || seen[sr][sc]) continue;
+        if (isEmpty(v) || seen[sr][sc]) continue;
         var group = [];
         var stack = [[sr, sc]];
         seen[sr][sc] = true;
@@ -192,7 +196,7 @@
     var t = e.target;
     if (busy || !t.classList || !t.classList.contains("tile")) return;
     var r = parseInt(t.dataset.r, 10), c = parseInt(t.dataset.c, 10);
-    if (board[r][c] === null) return;
+    if (isEmpty(board[r][c])) return;
     busy = true;
     board[r][c] += 1;
     render([r, c], null);
