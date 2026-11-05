@@ -50,8 +50,8 @@
   <h1>数字合并</h1>
   <p class="sub">点格子 +1；上下左右连着的相同数字满 3 个就合并成一个 +1 的新方块，<br>
   留在你点的那格（连锁合并时留在该组最左上的那格）。合并后上面的数字掉下来，<br>
-  最上面补随机 0-9 的新数字，合完立刻再扫全盘，直到没有可合并的为止。<br>
-  2 个相连不合并。</p>
+  最上面补下面四行已有的数字（随机抽一个），不会出现 0。合完立刻再扫全盘，<br>
+  直到没有可合并的为止。2 个相连不合并。</p>
   <div class="board" id="board"></div>
   <div class="actions"><button id="resetBtn" type="button">重置本局</button></div>
 </div>
@@ -67,9 +67,9 @@
     [6, 3, 6, 3, 7],
     [1, 6, 3, 8, 1]
   ];
-  // 数字配色（0-8 贴近参考图，9 起按色相轮换）
+  // 数字配色（1-8 贴近参考图，9 起按色相轮换；0 的配色留作兜底，正常玩不到 0）
   var PALETTE = [
-    { bg: "#6b6f7d", fg: "#fff" },  // 0 灰蓝
+    { bg: "#6b6f7d", fg: "#fff" },  // 0 灰蓝（兜底）
     { bg: "#f4f4f4", fg: "#222" },  // 1 白
     { bg: "#f6f1d8", fg: "#222" },  // 2 米白
     { bg: "#f2bd7d", fg: "#fff" },  // 3 浅橙
@@ -176,7 +176,8 @@
     return best;
   }
 
-  // 掉落 + 补新：每列数字沉到底，顶上空出来的格子补随机 0-9 的新数字；
+  // 掉落 + 补新：每列数字沉到底；顶上空出来的格子，从下面四行
+  // （第 2-5 行）已有的数字里随机抽一个补上，0 永远不会出现；
   // 返回合并出的新方块掉落后的位置（用于高亮）
   function settle(anchor) {
     var newAnchor = anchor;
@@ -195,8 +196,20 @@
       for (var r2 = ROWS - 1, i = 0; r2 >= 0; r2--, i++) {
         board[r2][c] = i < vals.length ? vals[i] : null;
       }
-      for (var r3 = 0; r3 < ROWS; r3++) {
-        if (board[r3][c] === null) board[r3][c] = Math.floor(Math.random() * 10);
+    }
+    var pool = [];
+    for (var pr = 1; pr < ROWS; pr++) {
+      for (var pc = 0; pc < COLS; pc++) {
+        if (board[pr][pc] !== null) pool.push(board[pr][pc]);
+      }
+    }
+    for (var fc = 0; fc < COLS; fc++) {
+      for (var fr = 0; fr < ROWS; fr++) {
+        if (board[fr][fc] === null) {
+          board[fr][fc] = pool.length
+            ? pool[Math.floor(Math.random() * pool.length)]
+            : 1 + Math.floor(Math.random() * 9); // 兜底：下面四行万一全空，补 1-9
+        }
       }
     }
     return newAnchor;
