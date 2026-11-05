@@ -28,9 +28,25 @@
   .tile { cursor: pointer; box-shadow: 0 3px 0 rgba(0, 0, 0, .18), inset 0 2px 0 rgba(255, 255, 255, .45); }
   .tile:active { transform: scale(.94); }
   .tile.bump { animation: bump .18s ease; }
-  .tile.merged { animation: pop .3s ease; }
+  .tile.merged { animation: pop .5s ease; }
+  .tile.merging { animation: mergePulse .7s ease infinite; }
+  .tile.falling { animation: drop .6s ease; }
+  .tile.spawned { animation: spawn .6s ease; }
   @keyframes bump { 40% { transform: scale(1.12); } }
   @keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  @keyframes mergePulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 3px 0 rgba(0, 0, 0, .18), inset 0 2px 0 rgba(255, 255, 255, .45); }
+    50% { transform: scale(1.1); box-shadow: 0 0 0 3px #fff, 0 0 18px rgba(255, 255, 255, .95), inset 0 2px 0 rgba(255, 255, 255, .45); }
+  }
+  @keyframes drop { from { transform: translateY(var(--drop, -112%)); opacity: .5; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes spawn { from { transform: translateY(-90%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .lives {
+    text-align: center; font-size: 17px; margin: 0 0 12px; color: #333;
+  }
+  .lives b { font-size: 22px; color: #dd1f16; }
+  .lives .lives-note { font-size: 13px; color: #999; }
+  .lives.out b { color: #999; }
+  .lives.out .lives-note { color: #dd1f16; }
   .empty {
     background: rgba(0, 0, 0, .12); box-shadow: inset 0 2px 6px rgba(0, 0, 0, .25);
     cursor: default;
@@ -52,6 +68,7 @@
   留在你点的那格（连锁合并时留在该组最左上的那格）。合并后上面的数字掉下来，<br>
   最上面补下面四行已有的数字（随机抽一个），不会出现 0。合完立刻再扫全盘，<br>
   直到没有可合并的为止。2 个相连不合并。</p>
+  <div class="lives" id="livesBar">剩余点击 <b id="livesNum">5</b> 次<span class="lives-note" id="livesNote"> · 点一次 -1，合并一次 +1</span></div>
   <div class="board" id="board"></div>
   <div class="actions"><button id="resetBtn" type="button">重置本局</button></div>
 </div>
@@ -81,13 +98,33 @@
   ];
   var HUES = [280, 210, 160, 320, 20, 190, 250, 100];
 
-  // 空格子只用 null 表示；0 是合法数字（从上面掉下来的新数字是 0-9）
+  // 空格子只用 null 表示；新数字只从下面四行抽，0 不会出现
   function isEmpty(v) { return v === null; }
+
+  // 每次合并分三步慢慢走：先闪要合的那组，再弹出新方块，最后掉落补新
+  var T_HIGHLIGHT = 700, T_POP = 450, T_FALL = 600;
+  // 生命周期：每局 5 次点击，点一次 -1，合并一次 +1
+  var START_LIVES = 5;
 
   var board = clone(INITIAL);
   var busy = false;
+  var lives = START_LIVES;
   var boardEl = document.getElementById("board");
   var resetBtn = document.getElementById("resetBtn");
+  var livesBar = document.getElementById("livesBar");
+  var livesNumEl = document.getElementById("livesNum");
+  var livesNoteEl = document.getElementById("livesNote");
+
+  function updateLives() {
+    livesNumEl.textContent = lives;
+    if (lives <= 0) {
+      livesBar.classList.add("out");
+      livesNoteEl.textContent = " · 次数用完了，点重置本局重新开始";
+    } else {
+      livesBar.classList.remove("out");
+      livesNoteEl.textContent = " · 点一次 -1，合并一次 +1";
+    }
+  }
 
   function clone(src) {
     return src.map(function (row) { return row.slice(); });
@@ -101,7 +138,9 @@
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
   }
 
-  function render(bumpPos, mergedPos) {
+  // opts: { bump:[r,c], merged:[r,c], merging:[[r,c]...], falls:{"r,c":掉几格}, spawned:[[r,c]...] }
+  function render(opts) {
+    opts = opts || {};
     boardEl.innerHTML = "";
     for (var r = 0; r < ROWS; r++) {
       for (var c = 0; c < COLS; c++) {
@@ -118,8 +157,15 @@
           cell.textContent = v;
           cell.dataset.r = r;
           cell.dataset.c = c;
-          if (bumpPos && bumpPos[0] === r && bumpPos[1] === c) cell.classList.add("bump");
-          if (mergedPos && mergedPos[0] === r && mergedPos[1] === c) cell.classList.add("merged");
+          if (opts.bump && opts.bump[0] === r && opts.bump[1] === c) cell.classList.add("bump");
+          if (opts.merged && opts.merged[0] === r && opts.merged[1] === c) {
+            cell.classList.add("merged");
+          } else if (opts.falls && opts.falls[r + "," + c]) {
+            cell.style.setProperty("--drop", (-opts.falls[r + "," + c] * 112) + "%");
+            cell.classList.add("falling");
+          }
+          if (opts.merging && groupHas({ cells: opts.merging }, [r, c])) cell.classList.add("merging");
+          if (opts.spawned && groupHas({ cells: opts.spawned }, [r, c])) cell.classList.add("spawned");
         }
         boardEl.appendChild(cell);
       }
@@ -178,9 +224,10 @@
 
   // 掉落 + 补新：每列数字沉到底；顶上空出来的格子，从下面四行
   // （第 2-5 行）已有的数字里随机抽一个补上，0 永远不会出现；
-  // 返回合并出的新方块掉落后的位置（用于高亮）
+  // 返回 { newAnchor: 新方块掉落后的位置, falls: {"r,c": 掉了几格}, spawned: [[r,c]...] }
   function settle(anchor) {
     var newAnchor = anchor;
+    var falls = {};
     for (var c = 0; c < COLS; c++) {
       if (anchor && c === anchor[1]) {
         var below = 0;
@@ -189,9 +236,18 @@
         }
         newAnchor = [ROWS - 1 - below, c];
       }
+      for (var r = 0; r < ROWS; r++) {
+        if (board[r][c] === null) continue;
+        var cnt = 0;
+        for (var rr = r; rr < ROWS; rr++) {
+          if (board[rr][c] !== null) cnt++;
+        }
+        var newRow = ROWS - cnt;
+        if (newRow > r) falls[newRow + "," + c] = newRow - r;
+      }
       var vals = [];
-      for (var r = ROWS - 1; r >= 0; r--) {
-        if (board[r][c] !== null) vals.push(board[r][c]);
+      for (var r4 = ROWS - 1; r4 >= 0; r4--) {
+        if (board[r4][c] !== null) vals.push(board[r4][c]);
       }
       for (var r2 = ROWS - 1, i = 0; r2 >= 0; r2--, i++) {
         board[r2][c] = i < vals.length ? vals[i] : null;
@@ -203,19 +259,22 @@
         if (board[pr][pc] !== null) pool.push(board[pr][pc]);
       }
     }
+    var spawned = [];
     for (var fc = 0; fc < COLS; fc++) {
       for (var fr = 0; fr < ROWS; fr++) {
         if (board[fr][fc] === null) {
           board[fr][fc] = pool.length
             ? pool[Math.floor(Math.random() * pool.length)]
             : 1 + Math.floor(Math.random() * 9); // 兜底：下面四行万一全空，补 1-9
+          spawned.push([fr, fc]);
         }
       }
     }
-    return newAnchor;
+    return { newAnchor: newAnchor, falls: falls, spawned: spawned };
   }
 
-  // 合并循环：每次只合第一组（行优先扫描到的第一组），合完掉落补新、立刻重扫全盘
+  // 合并循环：每次只合第一组（行优先扫描到的第一组），分三步慢慢走；
+  // 每合一次 +1 次点击；合完立刻重扫全盘
   async function resolveMerges(clickPos) {
     var steps = 0;
     while (true) {
@@ -223,35 +282,47 @@
       var groups = findGroups().filter(function (g) { return g.cells.length >= 3; });
       if (!groups.length) return;
       var g = groups[0];
+      render({ merging: g.cells });
+      await sleep(T_HIGHLIGHT);
       var anchor = (clickPos && groupHas(g, clickPos)) ? clickPos : firstCell(g);
       for (var i = 0; i < g.cells.length; i++) {
         board[g.cells[i][0]][g.cells[i][1]] = null;
       }
       board[anchor[0]][anchor[1]] = g.value + 1;
-      var newAnchor = settle(anchor);
-      render(null, newAnchor);
-      await sleep(280);
+      render({ merged: anchor });
+      await sleep(T_POP);
+      var res = settle(anchor);
+      render({ merged: res.newAnchor, falls: res.falls, spawned: res.spawned });
+      await sleep(T_FALL);
+      lives += 1;
+      updateLives();
     }
   }
 
   boardEl.addEventListener("click", function (e) {
     var t = e.target;
     if (busy || !t.classList || !t.classList.contains("tile")) return;
+    if (lives <= 0) return;
     var r = parseInt(t.dataset.r, 10), c = parseInt(t.dataset.c, 10);
     if (isEmpty(board[r][c])) return;
     busy = true;
+    lives -= 1;
+    updateLives();
     board[r][c] += 1;
-    render([r, c], null);
+    render({ bump: [r, c] });
     resolveMerges([r, c]).then(function () { busy = false; });
   });
 
   resetBtn.addEventListener("click", function () {
     if (busy) return;
     board = clone(INITIAL);
-    render(null, null);
+    lives = START_LIVES;
+    updateLives();
+    render({});
   });
 
-  render(null, null);
+  updateLives();
+  render({});
 })();
 </script>
 </body>
