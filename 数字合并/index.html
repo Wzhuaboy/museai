@@ -49,8 +49,9 @@
 <div class="wrap">
   <h1>数字合并</h1>
   <p class="sub">点格子 +1；上下左右连着的相同数字满 3 个就合并成一个 +1 的新方块，<br>
-  留在你点的那格（连锁合并时留在该组最左上的那格），合完立刻再扫全盘，<br>
-  直到没有可合并的为止。2 个相连不合并。合掉的格子留空，不会变成 0。</p>
+  留在你点的那格（连锁合并时留在该组最左上的那格）。合并后上面的数字掉下来，<br>
+  最上面补随机 0-9 的新数字，合完立刻再扫全盘，直到没有可合并的为止。<br>
+  2 个相连不合并。</p>
   <div class="board" id="board"></div>
   <div class="actions"><button id="resetBtn" type="button">重置本局</button></div>
 </div>
@@ -66,9 +67,9 @@
     [6, 3, 6, 3, 7],
     [1, 6, 3, 8, 1]
   ];
-  // 数字配色（1-8 贴近参考图，9 起按色相轮换）
+  // 数字配色（0-8 贴近参考图，9 起按色相轮换）
   var PALETTE = [
-    null,
+    { bg: "#6b6f7d", fg: "#fff" },  // 0 灰蓝
     { bg: "#f4f4f4", fg: "#222" },  // 1 白
     { bg: "#f6f1d8", fg: "#222" },  // 2 米白
     { bg: "#f2bd7d", fg: "#fff" },  // 3 浅橙
@@ -80,9 +81,8 @@
   ];
   var HUES = [280, 210, 160, 320, 20, 190, 250, 100];
 
-  // 盘面上永远不出现 0：空格子用 null 表示、渲染为空白且不可点；
-  // 数字只从 1 起往上加，下面三处把任何非正数都按空格子处理
-  function isEmpty(v) { return v === null || v <= 0; }
+  // 空格子只用 null 表示；0 是合法数字（从上面掉下来的新数字是 0-9）
+  function isEmpty(v) { return v === null; }
 
   var board = clone(INITIAL);
   var busy = false;
@@ -176,9 +176,37 @@
     return best;
   }
 
-  // 合并循环：每次只合第一组（行优先扫描到的第一组），合完立刻重扫全盘
+  // 掉落 + 补新：每列数字沉到底，顶上空出来的格子补随机 0-9 的新数字；
+  // 返回合并出的新方块掉落后的位置（用于高亮）
+  function settle(anchor) {
+    var newAnchor = anchor;
+    for (var c = 0; c < COLS; c++) {
+      if (anchor && c === anchor[1]) {
+        var below = 0;
+        for (var rb = anchor[0] + 1; rb < ROWS; rb++) {
+          if (board[rb][c] !== null) below++;
+        }
+        newAnchor = [ROWS - 1 - below, c];
+      }
+      var vals = [];
+      for (var r = ROWS - 1; r >= 0; r--) {
+        if (board[r][c] !== null) vals.push(board[r][c]);
+      }
+      for (var r2 = ROWS - 1, i = 0; r2 >= 0; r2--, i++) {
+        board[r2][c] = i < vals.length ? vals[i] : null;
+      }
+      for (var r3 = 0; r3 < ROWS; r3++) {
+        if (board[r3][c] === null) board[r3][c] = Math.floor(Math.random() * 10);
+      }
+    }
+    return newAnchor;
+  }
+
+  // 合并循环：每次只合第一组（行优先扫描到的第一组），合完掉落补新、立刻重扫全盘
   async function resolveMerges(clickPos) {
+    var steps = 0;
     while (true) {
+      if (++steps > 100) return; // 兜底：补的新数字理论上可能反复成组，防页面卡死
       var groups = findGroups().filter(function (g) { return g.cells.length >= 3; });
       if (!groups.length) return;
       var g = groups[0];
@@ -187,7 +215,8 @@
         board[g.cells[i][0]][g.cells[i][1]] = null;
       }
       board[anchor[0]][anchor[1]] = g.value + 1;
-      render(null, anchor);
+      var newAnchor = settle(anchor);
+      render(null, newAnchor);
       await sleep(280);
     }
   }
