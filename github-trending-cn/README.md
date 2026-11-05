@@ -47,6 +47,12 @@ github-trending-cn/
 
 ## 索引
 
+### 2026-11-05
+
+- 日榜第 1 名：[Auto Ontology：给数据加一层语义图谱，让 agent 查数不再瞎编](2026-11-05/NVIDIA-auto-ontology.md)（NVIDIA/auto-ontology）
+- 周榜第 5 名：[Superpowers：给编程 agent 配一套真正的软件开发方法论](2026-11-05/obra-superpowers.md)（obra/superpowers）
+- 月榜第 2 名：[AnyPS5：把 PS5 游戏可执行文件自动移植到 Linux 和 Windows](2026-11-05/boykopovar-AnyPS5.md)（boykopovar/AnyPS5）
+
 ### 2026-11-04
 
 - 日榜第 3 名：[worktrunk：给并行跑的 AI agent 一人一个工作区](2026-11-04/max-sixty-worktrunk.md)（max-sixty/worktrunk）
