@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>记账本</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f2f2f2; color: #333;
+    display: flex; justify-content: center; padding: 20px 14px 40px;
+  }
+  .wrap { width: 100%; max-width: 480px; }
+  h1 { text-align: center; font-size: 24px; margin: 6px 0 4px; letter-spacing: 2px; }
+  .sub { text-align: center; font-size: 13px; color: #999; margin: 0 0 16px; line-height: 1.6; }
+  .card {
+    background: #fff; border-radius: 16px; padding: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .08); margin-bottom: 14px;
+  }
+  .card h2 { font-size: 16px; margin: 0 0 12px; }
+  .summary h2 { margin-bottom: 10px; }
+  .sum-row { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 2px; border-bottom: 1px solid #f0f0f0; }
+  .sum-row:last-child { border-bottom: none; }
+  .sum-label { font-size: 15px; font-weight: 700; }
+  .sum-vals { text-align: right; font-size: 14px; line-height: 1.7; }
+  .in { color: #1a9e54; }
+  .out { color: #dd1f16; }
+  .bal { color: #333; font-weight: 700; }
+  .type-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .type-btn {
+    flex: 1; padding: 11px 0; font-size: 16px; font-family: inherit; border-radius: 999px;
+    border: 2px solid #ddd; background: #fff; color: #666; cursor: pointer;
+  }
+  .type-btn.on-out { border-color: #dd1f16; background: #dd1f16; color: #fff; }
+  .type-btn.on-in { border-color: #1a9e54; background: #1a9e54; color: #fff; }
+  label { display: block; font-size: 14px; color: #666; margin: 10px 0 5px; }
+  input, select {
+    width: 100%; padding: 12px; font-size: 16px; font-family: inherit;
+    border: 1px solid #ddd; border-radius: 10px; background: #fff; color: #333;
+  }
+  input:focus, select:focus { outline: none; border-color: #333; }
+  #addBtn {
+    width: 100%; margin-top: 16px; padding: 13px 0; font-size: 17px; font-family: inherit;
+    border: none; border-radius: 999px; background: #333; color: #fff; cursor: pointer; letter-spacing: 2px;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, .25);
+  }
+  #addBtn:active { transform: translateY(2px); box-shadow: none; }
+  .item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 2px; border-bottom: 1px solid #f0f0f0;
+  }
+  .item:last-child { border-bottom: none; }
+  .item .left { min-width: 0; }
+  .item .cat { font-size: 15px; font-weight: 700; }
+  .item .meta { font-size: 12px; color: #999; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .item .right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .item .amt { font-size: 16px; font-weight: 700; }
+  .del { border: none; background: none; color: #bbb; font-size: 18px; cursor: pointer; padding: 4px 6px; }
+  .del:active { color: #dd1f16; }
+  .empty { text-align: center; color: #aaa; font-size: 14px; padding: 12px 0 4px; }
+  .foot { text-align: center; font-size: 12px; color: #aaa; line-height: 1.7; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>记账本</h1>
+  <p class="sub">每天记一笔，今日、本月、本年一目了然</p>
+
+  <div class="card summary">
+    <h2>收支汇总</h2>
+    <div class="sum-row">
+      <span class="sum-label">今日</span>
+      <span class="sum-vals">
+        <span class="in">收入 <span id="todayIn">0.00</span></span> &nbsp;
+        <span class="out">支出 <span id="todayOut">0.00</span></span><br>
+        <span class="bal">结余 <span id="todayBal">0.00</span></span>
+      </span>
+    </div>
+    <div class="sum-row">
+      <span class="sum-label">本月</span>
+      <span class="sum-vals">
+        <span class="in">收入 <span id="monthIn">0.00</span></span> &nbsp;
+        <span class="out">支出 <span id="monthOut">0.00</span></span><br>
+        <span class="bal">结余 <span id="monthBal">0.00</span></span>
+      </span>
+    </div>
+    <div class="sum-row">
+      <span class="sum-label">本年</span>
+      <span class="sum-vals">
+        <span class="in">收入 <span id="yearIn">0.00</span></span> &nbsp;
+        <span class="out">支出 <span id="yearOut">0.00</span></span><br>
+        <span class="bal">结余 <span id="yearBal">0.00</span></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>记一笔</h2>
+    <div class="type-row">
+      <button type="button" class="type-btn on-out" id="btnOut">支出</button>
+      <button type="button" class="type-btn" id="btnIn">收入</button>
+    </div>
+    <label for="dateInput">日期</label>
+    <input type="date" id="dateInput">
+    <label for="amountInput">金额（元）</label>
+    <input type="number" id="amountInput" inputmode="decimal" min="0" step="0.01" placeholder="例如 25.5">
+    <label for="catInput">分类</label>
+    <select id="catInput"></select>
+    <label for="noteInput">备注（可选）</label>
+    <input type="text" id="noteInput" placeholder="例如 午饭、打车" maxlength="40">
+    <button type="button" id="addBtn">记下来</button>
+  </div>
+
+  <div class="card">
+    <h2>今日明细</h2>
+    <div id="todayList"></div>
+  </div>
+
+  <div class="card">
+    <h2>全部明细</h2>
+    <div id="allList"></div>
+  </div>
+
+  <p class="foot">数据只存在这台手机这个浏览器里，换设备不同步<br>点每条右边的 × 可以删掉那一笔</p>
+</div>
+
+<script>
+(function () {
+  var KEY = "ledger_v1";
+  var OUT_CATS = ["餐饮", "交通", "购物", "住房", "娱乐", "医疗", "其他"];
+  var IN_CATS = ["工资", "副业", "红包", "其他"];
+  var type = "out";
+
+  var btnOut = document.getElementById("btnOut");
+  var btnIn = document.getElementById("btnIn");
+  var dateInput = document.getElementById("dateInput");
+  var amountInput = document.getElementById("amountInput");
+  var catInput = document.getElementById("catInput");
+  var noteInput = document.getElementById("noteInput");
+
+  function todayStr() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return d.getFullYear() + "-" + m + "-" + day;
+  }
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function save(list) {
+    localStorage.setItem(KEY, JSON.stringify(list));
+  }
+  function money(n) { return (Math.round(n * 100) / 100).toFixed(2); }
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function fillCats() {
+    var cats = type === "out" ? OUT_CATS : IN_CATS;
+    catInput.innerHTML = "";
+    cats.forEach(function (c) {
+      var o = document.createElement("option");
+      o.value = c; o.textContent = c;
+      catInput.appendChild(o);
+    });
+  }
+  function setType(t) {
+    type = t;
+    btnOut.className = "type-btn" + (t === "out" ? " on-out" : "");
+    btnIn.className = "type-btn" + (t === "in" ? " on-in" : "");
+    fillCats();
+  }
+  btnOut.addEventListener("click", function () { setType("out"); });
+  btnIn.addEventListener("click", function () { setType("in"); });
+
+  function sum(list, pred) {
+    var income = 0, out = 0;
+    list.forEach(function (r) {
+      if (!pred(r)) return;
+      if (r.type === "in") income += r.amount;
+      else out += r.amount;
+    });
+    return { income: income, out: out };
+  }
+  function render() {
+    var list = load();
+    var today = todayStr();
+    var ym = today.slice(0, 7);
+    var y = today.slice(0, 4);
+    var t = sum(list, function (r) { return r.date === today; });
+    var m = sum(list, function (r) { return r.date.slice(0, 7) === ym; });
+    var yy = sum(list, function (r) { return r.date.slice(0, 4) === y; });
+    document.getElementById("todayIn").textContent = money(t.income);
+    document.getElementById("todayOut").textContent = money(t.out);
+    document.getElementById("todayBal").textContent = money(t.income - t.out);
+    document.getElementById("monthIn").textContent = money(m.income);
+    document.getElementById("monthOut").textContent = money(m.out);
+    document.getElementById("monthBal").textContent = money(m.income - m.out);
+    document.getElementById("yearIn").textContent = money(yy.income);
+    document.getElementById("yearOut").textContent = money(yy.out);
+    document.getElementById("yearBal").textContent = money(yy.income - yy.out);
+
+    var sorted = list.slice().sort(function (a, b) {
+      if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+      return b.id - a.id;
+    });
+    renderList(document.getElementById("todayList"), sorted.filter(function (r) { return r.date === today; }), "今天还没有记账");
+    renderList(document.getElementById("allList"), sorted, "还没有任何记录");
+  }
+  function renderList(box, rows, emptyText) {
+    box.innerHTML = "";
+    if (!rows.length) {
+      var p = document.createElement("p");
+      p.className = "empty"; p.textContent = emptyText;
+      box.appendChild(p);
+      return;
+    }
+    rows.forEach(function (r) {
+      var div = document.createElement("div");
+      div.className = "item";
+      var sign = r.type === "in" ? "+" : "-";
+      var cls = r.type === "in" ? "in" : "out";
+      var meta = r.date + (r.note ? " · " + r.note : "");
+      div.innerHTML =
+        '<div class="left"><div class="cat">' + esc(r.cat) + '</div>' +
+        '<div class="meta">' + esc(meta) + '</div></div>' +
+        '<div class="right"><span class="amt ' + cls + '">' + sign + money(r.amount) + '</span>' +
+        '<button type="button" class="del" data-id="' + r.id + '" aria-label="删除">×</button></div>';
+      box.appendChild(div);
+    });
+    box.querySelectorAll(".del").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var id = Number(b.getAttribute("data-id"));
+        save(load().filter(function (r) { return r.id !== id; }));
+        render();
+      });
+    });
+  }
+
+  document.getElementById("addBtn").addEventListener("click", function () {
+    var amount = Math.round(parseFloat(amountInput.value) * 100) / 100;
+    if (!amount || amount <= 0) { alert("先填一个大于 0 的金额"); amountInput.focus(); return; }
+    if (!dateInput.value) { alert("先选一个日期"); return; }
+    var list = load();
+    list.push({
+      id: Date.now(),
+      type: type,
+      date: dateInput.value,
+      amount: amount,
+      cat: catInput.value,
+      note: noteInput.value.trim()
+    });
+    save(list);
+    amountInput.value = "";
+    noteInput.value = "";
+    render();
+  });
+
+  dateInput.value = todayStr();
+  setType("out");
+  render();
+})();
+</script>
+</body>
+</html>
