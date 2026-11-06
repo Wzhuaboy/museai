@@ -64,6 +64,16 @@
   .del:active { color: #dd1f16; }
   .empty { text-align: center; color: #aaa; font-size: 14px; padding: 12px 0 4px; }
   .foot { text-align: center; font-size: 12px; color: #aaa; line-height: 1.7; margin-top: 6px; }
+  .sync-status { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 10px; }
+  .sync-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .sync-row:last-child { margin-bottom: 0; }
+  .sync-row input { flex: 1; min-width: 0; }
+  .sync-btn {
+    padding: 11px 18px; font-size: 15px; font-family: inherit; border: none; border-radius: 999px;
+    background: #333; color: #fff; cursor: pointer; white-space: nowrap;
+  }
+  .sync-btn.ghost { background: #f0f0f0; color: #666; }
+  .sync-btn:active { transform: translateY(1px); }
   .entry-overlay {
     position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 10;
     background: rgba(0, 0, 0, .45);
@@ -118,6 +128,26 @@
         <span class="out">支出 <span id="yearOut">0.00</span></span><br>
         <span class="bal">结余 <span id="yearBal">0.00</span></span>
       </span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>云同步</h2>
+    <div class="sync-status" id="syncStatus">未登录，账只存在这台手机上</div>
+    <div id="syncLogin">
+      <div class="sync-row">
+        <input type="text" id="syncUser" placeholder="账号，例如 ahua" maxlength="32" autocomplete="username">
+      </div>
+      <div class="sync-row">
+        <input type="password" id="syncPass" placeholder="密码，至少 4 位" autocomplete="current-password">
+        <button type="button" class="sync-btn" id="syncLoginBtn">登录 / 注册</button>
+      </div>
+    </div>
+    <div id="syncLoggedIn" style="display:none">
+      <div class="sync-row">
+        <button type="button" class="sync-btn" id="syncNowBtn">立即同步</button>
+        <button type="button" class="sync-btn ghost" id="syncLogoutBtn">退出登录</button>
+      </div>
     </div>
   </div>
 
@@ -187,7 +217,139 @@
   }
   function save(list) {
     localStorage.setItem(KEY, JSON.stringify(list));
+    localStorage.setItem(TS_KEY, String(Date.now()));
   }
+  function getTs() {
+    return Number(localStorage.getItem(TS_KEY) || 0);
+  }
+
+  // ---- 云同步（Cloudflare Worker + KV）----
+  var WORKER_URL = "https://ahua-ledger-sync.wangzhanghua001023.workers.dev";
+  var AUTH_KEY = "ledger_auth_v1";
+  var TS_KEY = "ledger_updated_at";
+  var syncStatusEl = document.getElementById("syncStatus");
+  var syncLoginEl = document.getElementById("syncLogin");
+  var syncLoggedInEl = document.getElementById("syncLoggedIn");
+
+  function setStatus(t) { syncStatusEl.textContent = t; }
+  function getAuth() {
+    try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || null; }
+    catch (e) { return null; }
+  }
+  function saveAuth(a) { localStorage.setItem(AUTH_KEY, JSON.stringify(a)); }
+  function clearAuth() { localStorage.removeItem(AUTH_KEY); }
+  function showLoggedIn(user) {
+    syncLoginEl.style.display = "none";
+    syncLoggedInEl.style.display = "block";
+    setStatus("已登录：" + user + "，记账后自动同步到云上");
+  }
+  function showLoggedOut() {
+    syncLoginEl.style.display = "block";
+    syncLoggedInEl.style.display = "none";
+    setStatus("未登录，账只存在这台手机上");
+  }
+  async function sha256Hex(str) {
+    var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(function (b) {
+      return b.toString(16).padStart(2, "0");
+    }).join("");
+  }
+  async function pushSync() {
+    var auth = getAuth();
+    if (!auth || !WORKER_URL) return false;
+    try {
+      var res = await fetch(WORKER_URL + "/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: auth.user, passHash: auth.passHash, data: load(), updatedAt: getTs() }),
+      });
+      if (res.status === 401) {
+        clearAuth();
+        showLoggedOut();
+        setStatus("密码不对，请重新登录");
+        return false;
+      }
+      if (!res.ok) { setStatus("同步失败，网络可能有问题，账还在本机"); return false; }
+      setStatus("已登录：" + auth.user + "，已同步 " + new Date().toLocaleString());
+      return true;
+    } catch (e) {
+      setStatus("同步失败，网络可能有问题，账还在本机");
+      return false;
+    }
+  }
+  async function pullSync() {
+    var auth = getAuth();
+    if (!auth || !WORKER_URL) return false;
+    try {
+      var res = await fetch(WORKER_URL + "/api/sync?user=" + encodeURIComponent(auth.user) + "&passHash=" + auth.passHash);
+      if (res.status === 401) {
+        clearAuth();
+        showLoggedOut();
+        setStatus("密码不对，请重新登录");
+        return false;
+      }
+      if (res.status === 404) { await pushSync(); return true; }
+      if (!res.ok) { setStatus("同步失败，网络可能有问题，账还在本机"); return false; }
+      var body = await res.json();
+      var serverTs = body.updatedAt || 0;
+      if (serverTs > getTs()) {
+        save(body.data || []);
+        render();
+        setStatus("已登录：" + auth.user + "，已从云端拉取最新账本");
+      } else if (getTs() > serverTs) {
+        await pushSync();
+      } else {
+        setStatus("已登录：" + auth.user + "，云端和本机已经是最新");
+      }
+      return true;
+    } catch (e) {
+      setStatus("同步失败，网络可能有问题，账还在本机");
+      return false;
+    }
+  }
+  async function loginSync() {
+    if (!WORKER_URL) { alert("同步服务还没部署好，稍后再试"); return; }
+    var user = document.getElementById("syncUser").value.trim();
+    var pass = document.getElementById("syncPass").value;
+    if (!/^[A-Za-z0-9_.\-@]{3,32}$/.test(user)) { alert("账号用 3-32 位字母、数字或 _ . - @"); return; }
+    if (pass.length < 4) { alert("密码至少 4 位"); return; }
+    var passHash = await sha256Hex(pass);
+    setStatus("正在登录…");
+    try {
+      var res = await fetch(WORKER_URL + "/api/sync?user=" + encodeURIComponent(user) + "&passHash=" + passHash);
+      if (res.status === 401) { alert("密码不对"); showLoggedOut(); return; }
+      if (res.status === 404) {
+        if (!confirm("这个账号还没注册，要用这个密码注册，并把本机的账同步到云上吗？")) { showLoggedOut(); return; }
+        saveAuth({ user: user, passHash: passHash });
+        if (await pushSync()) showLoggedIn(user);
+        return;
+      }
+      if (!res.ok) { alert("登录失败，网络可能有问题"); showLoggedOut(); return; }
+      var body = await res.json();
+      saveAuth({ user: user, passHash: passHash });
+      var localTs = getTs();
+      if ((body.updatedAt || 0) > localTs) {
+        save(body.data || []);
+        render();
+      } else if (localTs > (body.updatedAt || 0)) {
+        await pushSync();
+      }
+      showLoggedIn(user);
+    } catch (e) {
+      alert("登录失败，网络可能有问题");
+      showLoggedOut();
+    }
+  }
+  document.getElementById("syncLoginBtn").addEventListener("click", loginSync);
+  document.getElementById("syncNowBtn").addEventListener("click", async function () {
+    setStatus("正在同步…");
+    await pullSync();
+    await pushSync();
+  });
+  document.getElementById("syncLogoutBtn").addEventListener("click", function () {
+    clearAuth();
+    showLoggedOut();
+  });
   function money(n) { return (Math.round(n * 100) / 100).toFixed(2); }
   function esc(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -239,6 +401,7 @@
     save(list);
     closeEntry();
     render();
+    pushSync();
   }
 
   document.getElementById("btnOut").addEventListener("click", function () { openEntry("out"); });
@@ -307,11 +470,16 @@
         var id = Number(b.getAttribute("data-id"));
         save(load().filter(function (r) { return r.id !== id; }));
         render();
+        pushSync();
       });
     });
   }
 
   render();
+  if (WORKER_URL && getAuth()) {
+    showLoggedIn(getAuth().user);
+    pullSync();
+  }
 })();
 </script>
 </body>
