@@ -317,6 +317,11 @@
     setStatus("正在登录…");
     try {
       var res = await fetch(WORKER_URL + "/api/sync?user=" + encodeURIComponent(user) + "&passHash=" + passHash);
+      if (res.status === 404) {
+        // KV 全球同步有几秒延迟，刚在别的手机上注册完就登录可能读到旧数据，重试一次再下结论
+        await new Promise(function (r) { setTimeout(r, 2000); });
+        res = await fetch(WORKER_URL + "/api/sync?user=" + encodeURIComponent(user) + "&passHash=" + passHash);
+      }
       if (res.status === 401) { alert("密码不对"); showLoggedOut(); return; }
       if (res.status === 404) {
         if (!confirm("这个账号还没注册，要用这个密码注册，并把本机的账同步到云上吗？")) { showLoggedOut(); return; }
