@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>记账本</title>
+<title>阿华手帐本</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -34,12 +34,19 @@
   }
   .type-btn.on-out { border-color: #dd1f16; background: #dd1f16; color: #fff; }
   .type-btn.on-in { border-color: #1a9e54; background: #1a9e54; color: #fff; }
+  .cat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 4px; }
+  .cat-chip {
+    padding: 8px 16px; font-size: 14px; font-family: inherit; border-radius: 999px;
+    border: 1.5px solid #ddd; background: #fff; color: #666; cursor: pointer;
+  }
+  .cat-chip.on-out { border-color: #dd1f16; background: #fdeceb; color: #dd1f16; font-weight: 700; }
+  .cat-chip.on-in { border-color: #1a9e54; background: #e7f6ec; color: #1a9e54; font-weight: 700; }
   label { display: block; font-size: 14px; color: #666; margin: 10px 0 5px; }
-  input, select {
+  input {
     width: 100%; padding: 12px; font-size: 16px; font-family: inherit;
     border: 1px solid #ddd; border-radius: 10px; background: #fff; color: #333;
   }
-  input:focus, select:focus { outline: none; border-color: #333; }
+  input:focus { outline: none; border-color: #333; }
   #addBtn {
     width: 100%; margin-top: 16px; padding: 13px 0; font-size: 17px; font-family: inherit;
     border: none; border-radius: 999px; background: #333; color: #fff; cursor: pointer; letter-spacing: 2px;
@@ -60,48 +67,11 @@
   .del:active { color: #dd1f16; }
   .empty { text-align: center; color: #aaa; font-size: 14px; padding: 12px 0 4px; }
   .foot { text-align: center; font-size: 12px; color: #aaa; line-height: 1.7; margin-top: 6px; }
-  .calc-overlay {
-    position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 10;
-    background: rgba(0, 0, 0, .45);
-    display: none; align-items: flex-end; justify-content: center;
-  }
-  .calc-overlay.show { display: flex; }
-  .calc-sheet {
-    width: 100%; max-width: 480px; background: #fff;
-    border-radius: 20px 20px 0 0; padding: 16px 16px 24px;
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, .2);
-  }
-  .calc-title { font-size: 16px; font-weight: 700; text-align: center; margin: 2px 0 10px; }
-  .calc-display {
-    background: #f6f6f6; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;
-    text-align: right; min-height: 64px;
-  }
-  .calc-expr { font-size: 15px; color: #999; min-height: 20px; word-break: break-all; }
-  .calc-result { font-size: 28px; font-weight: 700; line-height: 1.3; word-break: break-all; }
-  .calc-result.out { color: #dd1f16; }
-  .calc-result.in { color: #1a9e54; }
-  .calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .calc-key {
-    padding: 15px 0; font-size: 20px; font-family: inherit; border: none; border-radius: 12px;
-    background: #f0f0f0; color: #333; cursor: pointer;
-  }
-  .calc-key:active { background: #ddd; }
-  .calc-key.op { background: #ffe9e7; color: #dd1f16; }
-  .calc-key.eq { background: #333; color: #fff; }
-  .calc-key.fn { background: #e8e8e8; color: #666; font-size: 17px; }
-  .calc-actions { display: flex; gap: 8px; margin-top: 12px; }
-  .calc-actions button {
-    flex: 1; padding: 13px 0; font-size: 16px; font-family: inherit; border: none;
-    border-radius: 999px; cursor: pointer; letter-spacing: 2px;
-  }
-  #calcCancel { background: #f0f0f0; color: #666; }
-  #calcOk { background: #333; color: #fff; box-shadow: 0 3px 0 rgba(0, 0, 0, .25); }
-  #calcOk:active { transform: translateY(2px); box-shadow: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>记账本</h1>
+  <h1>阿华手帐本</h1>
   <p class="sub">每天记一笔，今日、本月、本年一目了然</p>
 
   <div class="card summary">
@@ -138,12 +108,12 @@
       <button type="button" class="type-btn on-out" id="btnOut">支出</button>
       <button type="button" class="type-btn" id="btnIn">收入</button>
     </div>
+    <label>分类</label>
+    <div class="cat-chips" id="catChips"></div>
     <label for="dateInput">日期</label>
     <input type="date" id="dateInput">
-    <label for="amountInput">金额（元）· 点支出 / 收入可用计算器多笔加总</label>
+    <label for="amountInput">金额（元）</label>
     <input type="number" id="amountInput" inputmode="decimal" min="0" step="0.01" placeholder="例如 25.5">
-    <label for="catInput">分类</label>
-    <select id="catInput"></select>
     <label for="noteInput">备注（可选）</label>
     <input type="text" id="noteInput" placeholder="例如 午饭、打车" maxlength="40">
     <button type="button" id="addBtn">记下来</button>
@@ -162,54 +132,19 @@
   <p class="foot">数据只存在这台手机这个浏览器里，换设备不同步<br>点每条右边的 × 可以删掉那一笔</p>
 </div>
 
-<div class="calc-overlay" id="calcOverlay">
-  <div class="calc-sheet">
-    <div class="calc-title" id="calcTitle">支出计算器</div>
-    <div class="calc-display">
-      <div class="calc-expr" id="calcExpr"></div>
-      <div class="calc-result out" id="calcResult">0</div>
-    </div>
-    <div class="calc-keys" id="calcKeys">
-      <button type="button" class="calc-key fn" data-k="C">C</button>
-      <button type="button" class="calc-key fn" data-k="B">⌫</button>
-      <button type="button" class="calc-key op" data-k="/">÷</button>
-      <button type="button" class="calc-key op" data-k="*">×</button>
-      <button type="button" class="calc-key" data-k="7">7</button>
-      <button type="button" class="calc-key" data-k="8">8</button>
-      <button type="button" class="calc-key" data-k="9">9</button>
-      <button type="button" class="calc-key op" data-k="-">−</button>
-      <button type="button" class="calc-key" data-k="4">4</button>
-      <button type="button" class="calc-key" data-k="5">5</button>
-      <button type="button" class="calc-key" data-k="6">6</button>
-      <button type="button" class="calc-key op" data-k="+">＋</button>
-      <button type="button" class="calc-key" data-k="1">1</button>
-      <button type="button" class="calc-key" data-k="2">2</button>
-      <button type="button" class="calc-key" data-k="3">3</button>
-      <button type="button" class="calc-key eq" data-k="=">=</button>
-      <button type="button" class="calc-key" data-k="0">0</button>
-      <button type="button" class="calc-key" data-k="00">00</button>
-      <button type="button" class="calc-key" data-k=".">.</button>
-      <button type="button" class="calc-key fn" data-k="OK">确定</button>
-    </div>
-    <div class="calc-actions">
-      <button type="button" id="calcCancel">取消</button>
-      <button type="button" id="calcOk">确定填入金额</button>
-    </div>
-  </div>
-</div>
-
 <script>
 (function () {
   var KEY = "ledger_v1";
   var OUT_CATS = ["餐饮", "交通", "购物", "住房", "娱乐", "医疗", "其他"];
   var IN_CATS = ["工资", "副业", "红包", "其他"];
   var type = "out";
+  var selectedCat = OUT_CATS[0];
 
   var btnOut = document.getElementById("btnOut");
   var btnIn = document.getElementById("btnIn");
   var dateInput = document.getElementById("dateInput");
   var amountInput = document.getElementById("amountInput");
-  var catInput = document.getElementById("catInput");
+  var catChips = document.getElementById("catChips");
   var noteInput = document.getElementById("noteInput");
 
   function todayStr() {
@@ -232,11 +167,20 @@
 
   function fillCats() {
     var cats = type === "out" ? OUT_CATS : IN_CATS;
-    catInput.innerHTML = "";
+    selectedCat = cats[0];
+    catChips.innerHTML = "";
     cats.forEach(function (c) {
-      var o = document.createElement("option");
-      o.value = c; o.textContent = c;
-      catInput.appendChild(o);
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "cat-chip" + (c === selectedCat ? (type === "out" ? " on-out" : " on-in") : "");
+      b.textContent = c;
+      b.addEventListener("click", function () {
+        selectedCat = c;
+        var chips = catChips.querySelectorAll(".cat-chip");
+        chips.forEach(function (x) { x.className = "cat-chip"; });
+        b.className = "cat-chip" + (type === "out" ? " on-out" : " on-in");
+      });
+      catChips.appendChild(b);
     });
   }
   function setType(t) {
@@ -245,103 +189,8 @@
     btnIn.className = "type-btn" + (t === "in" ? " on-in" : "");
     fillCats();
   }
-  // ---- 计算器：点支出 / 收入弹出，可多笔加总 ----
-  var calcOverlay = document.getElementById("calcOverlay");
-  var calcExprEl = document.getElementById("calcExpr");
-  var calcResultEl = document.getElementById("calcResult");
-  var calcTitle = document.getElementById("calcTitle");
-  var calcExpr = "";
-  var calcDone = false;
-
-  function calcEval(expr) {
-    var tokens = expr.match(/(\d+\.?\d*|\.\d+|[+\-*/])/g);
-    if (!tokens || !tokens.length) return 0;
-    var nums = [], ops = [];
-    var i, t;
-    for (i = 0; i < tokens.length; i++) {
-      t = tokens[i];
-      if (t === "+" || t === "-" || t === "*" || t === "/") ops.push(t);
-      else nums.push(parseFloat(t));
-    }
-    if (nums.length === 0) return 0;
-    if (ops.length >= nums.length) ops.length = nums.length - 1;
-    var n2 = [nums[0]], o2 = [];
-    for (i = 0; i < ops.length; i++) {
-      if (ops[i] === "*" || ops[i] === "/") {
-        var a = n2.pop(), b = nums[i + 1];
-        if (ops[i] === "/" && b === 0) return NaN;
-        n2.push(ops[i] === "*" ? a * b : a / b);
-      } else {
-        o2.push(ops[i]);
-        n2.push(nums[i + 1]);
-      }
-    }
-    var v = n2[0];
-    for (i = 0; i < o2.length; i++) v = o2[i] === "+" ? v + n2[i + 1] : v - n2[i + 1];
-    return Math.round(v * 100) / 100;
-  }
-  function calcShow() {
-    calcExprEl.textContent = calcExpr.replace(/\*/g, "×").replace(/\//g, "÷").replace(/-/g, "−");
-    var v = calcExpr ? calcEval(calcExpr) : 0;
-    calcResultEl.textContent = isNaN(v) ? "算错了" : money(v);
-  }
-  function calcOpen() {
-    calcTitle.textContent = type === "out" ? "支出计算器" : "收入计算器";
-    calcResultEl.className = "calc-result " + type;
-    var cur = parseFloat(amountInput.value);
-    calcExpr = cur > 0 ? String(cur) : "";
-    calcDone = false;
-    calcShow();
-    calcOverlay.classList.add("show");
-  }
-  function calcClose() { calcOverlay.classList.remove("show"); }
-  function calcConfirm() {
-    var v = calcExpr ? calcEval(calcExpr) : 0;
-    if (isNaN(v) || v <= 0) { alert("先算出一个大于 0 的金额"); return; }
-    amountInput.value = money(v);
-    calcClose();
-  }
-  function calcPress(k) {
-    if (k === "C") { calcExpr = ""; calcDone = false; calcShow(); return; }
-    if (k === "B") {
-      calcExpr = calcExpr.slice(0, -1);
-      calcDone = false; calcShow(); return;
-    }
-    if (k === "=") {
-      var v = calcExpr ? calcEval(calcExpr) : 0;
-      if (isNaN(v)) { calcExpr = ""; calcShow(); return; }
-      calcExpr = String(v);
-      calcDone = true; calcShow(); return;
-    }
-    if (k === "OK") { calcConfirm(); return; }
-    if (k === "+" || k === "-" || k === "*" || k === "/") {
-      if (!calcExpr) return;
-      if (/[+\-*/]$/.test(calcExpr)) calcExpr = calcExpr.slice(0, -1) + k;
-      else calcExpr += k;
-      calcDone = false; calcShow(); return;
-    }
-    if (k === ".") {
-      var seg = calcExpr.split(/[+\-*/]/).pop();
-      if (seg.indexOf(".") !== -1) return;
-      calcExpr += seg === "" ? "0." : ".";
-      calcDone = false; calcShow(); return;
-    }
-    if (calcDone) { calcExpr = ""; calcDone = false; }
-    if (calcExpr === "0" && k === "0") return;
-    if (calcExpr === "0") calcExpr = k === "00" ? "0" : k;
-    else calcExpr += k;
-    calcShow();
-  }
-  document.getElementById("calcKeys").addEventListener("click", function (e) {
-    var b = e.target.closest("[data-k]");
-    if (b) calcPress(b.getAttribute("data-k"));
-  });
-  document.getElementById("calcOk").addEventListener("click", calcConfirm);
-  document.getElementById("calcCancel").addEventListener("click", calcClose);
-  calcOverlay.addEventListener("click", function (e) { if (e.target === calcOverlay) calcClose(); });
-
-  btnOut.addEventListener("click", function () { setType("out"); calcOpen(); });
-  btnIn.addEventListener("click", function () { setType("in"); calcOpen(); });
+  btnOut.addEventListener("click", function () { setType("out"); });
+  btnIn.addEventListener("click", function () { setType("in"); });
 
   function sum(list, pred) {
     var income = 0, out = 0;
@@ -417,7 +266,7 @@
       type: type,
       date: dateInput.value,
       amount: amount,
-      cat: catInput.value,
+      cat: selectedCat,
       note: noteInput.value.trim()
     });
     save(list);
