@@ -47,6 +47,12 @@ github-trending-cn/
 
 ## 索引
 
+### 2026-11-06
+
+- 日榜第 2 名：[skills：给真正干工程的人准备的 agent 技能合集](2026-11-06/mattpocock-skills.md)（mattpocock/skills）
+- 周榜第 4 名：[skills：Anthropic 官方的 Agent Skills 仓库](2026-11-06/anthropics-skills.md)（anthropics/skills）
+- 月榜第 6 名：[VoiceStudio：开源、完全本地的 ElevenLabs 替代品](2026-11-06/debpalash-VoiceStudio.md)（debpalash/VoiceStudio）
+
 ### 2026-11-05
 
 - 日榜第 1 名：[Auto Ontology：给数据加一层语义图谱，让 agent 查数不再瞎编](2026-11-05/NVIDIA-auto-ontology.md)（NVIDIA/auto-ontology）
