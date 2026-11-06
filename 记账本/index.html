@@ -27,13 +27,15 @@
   .in { color: #1a9e54; }
   .out { color: #dd1f16; }
   .bal { color: #333; font-weight: 700; }
-  .type-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .type-row { display: flex; gap: 8px; }
   .type-btn {
-    flex: 1; padding: 11px 0; font-size: 16px; font-family: inherit; border-radius: 999px;
-    border: 2px solid #ddd; background: #fff; color: #666; cursor: pointer;
+    flex: 1; padding: 13px 0; font-size: 17px; font-family: inherit; border-radius: 999px;
+    border: none; color: #fff; cursor: pointer; letter-spacing: 2px;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, .25);
   }
-  .type-btn.on-out { border-color: #dd1f16; background: #dd1f16; color: #fff; }
-  .type-btn.on-in { border-color: #1a9e54; background: #1a9e54; color: #fff; }
+  .type-btn:active { transform: translateY(2px); box-shadow: none; }
+  #btnOut { background: #dd1f16; }
+  #btnIn { background: #1a9e54; }
   .cat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 4px; }
   .cat-chip {
     padding: 8px 16px; font-size: 14px; font-family: inherit; border-radius: 999px;
@@ -47,12 +49,7 @@
     border: 1px solid #ddd; border-radius: 10px; background: #fff; color: #333;
   }
   input:focus { outline: none; border-color: #333; }
-  #addBtn {
-    width: 100%; margin-top: 16px; padding: 13px 0; font-size: 17px; font-family: inherit;
-    border: none; border-radius: 999px; background: #333; color: #fff; cursor: pointer; letter-spacing: 2px;
-    box-shadow: 0 3px 0 rgba(0, 0, 0, .25);
-  }
-  #addBtn:active { transform: translateY(2px); box-shadow: none; }
+  #mAmount { font-size: 26px; font-weight: 700; padding: 14px; }
   .item {
     display: flex; justify-content: space-between; align-items: center;
     padding: 11px 2px; border-bottom: 1px solid #f0f0f0;
@@ -67,6 +64,28 @@
   .del:active { color: #dd1f16; }
   .empty { text-align: center; color: #aaa; font-size: 14px; padding: 12px 0 4px; }
   .foot { text-align: center; font-size: 12px; color: #aaa; line-height: 1.7; margin-top: 6px; }
+  .entry-overlay {
+    position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 10;
+    background: rgba(0, 0, 0, .45);
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .entry-overlay.show { display: flex; }
+  .entry-sheet {
+    width: 100%; max-width: 480px; background: #fff;
+    border-radius: 20px 20px 0 0; padding: 16px 16px 24px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, .2);
+  }
+  .entry-title { font-size: 18px; font-weight: 700; text-align: center; margin: 2px 0 6px; }
+  .entry-title.out { color: #dd1f16; }
+  .entry-title.in { color: #1a9e54; }
+  .entry-actions { display: flex; gap: 8px; margin-top: 16px; }
+  .entry-actions button {
+    flex: 1; padding: 13px 0; font-size: 16px; font-family: inherit; border: none;
+    border-radius: 999px; cursor: pointer; letter-spacing: 2px;
+  }
+  #entryCancel { background: #f0f0f0; color: #666; }
+  #entryOk { background: #333; color: #fff; box-shadow: 0 3px 0 rgba(0, 0, 0, .25); }
+  #entryOk:active { transform: translateY(2px); box-shadow: none; }
 </style>
 </head>
 <body>
@@ -105,18 +124,9 @@
   <div class="card">
     <h2>记一笔</h2>
     <div class="type-row">
-      <button type="button" class="type-btn on-out" id="btnOut">支出</button>
+      <button type="button" class="type-btn" id="btnOut">支出</button>
       <button type="button" class="type-btn" id="btnIn">收入</button>
     </div>
-    <label>分类</label>
-    <div class="cat-chips" id="catChips"></div>
-    <label for="dateInput">日期</label>
-    <input type="date" id="dateInput">
-    <label for="amountInput">金额（元）</label>
-    <input type="number" id="amountInput" inputmode="decimal" min="0" step="0.01" placeholder="例如 25.5">
-    <label for="noteInput">备注（可选）</label>
-    <input type="text" id="noteInput" placeholder="例如 午饭、打车" maxlength="40">
-    <button type="button" id="addBtn">记下来</button>
   </div>
 
   <div class="card">
@@ -132,6 +142,24 @@
   <p class="foot">数据只存在这台手机这个浏览器里，换设备不同步<br>点每条右边的 × 可以删掉那一笔</p>
 </div>
 
+<div class="entry-overlay" id="entryOverlay">
+  <div class="entry-sheet">
+    <div class="entry-title out" id="entryTitle">记一笔支出</div>
+    <label for="mAmount">金额（元）</label>
+    <input type="number" id="mAmount" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+    <label>分类</label>
+    <div class="cat-chips" id="catChips"></div>
+    <label for="mDate">日期</label>
+    <input type="date" id="mDate">
+    <label for="mNote">备注（可选）</label>
+    <input type="text" id="mNote" placeholder="例如 午饭、打车" maxlength="40">
+    <div class="entry-actions">
+      <button type="button" id="entryCancel">取消</button>
+      <button type="button" id="entryOk">确定</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   var KEY = "ledger_v1";
@@ -140,12 +168,12 @@
   var type = "out";
   var selectedCat = OUT_CATS[0];
 
-  var btnOut = document.getElementById("btnOut");
-  var btnIn = document.getElementById("btnIn");
-  var dateInput = document.getElementById("dateInput");
-  var amountInput = document.getElementById("amountInput");
+  var entryOverlay = document.getElementById("entryOverlay");
+  var entryTitle = document.getElementById("entryTitle");
+  var mAmount = document.getElementById("mAmount");
+  var mDate = document.getElementById("mDate");
+  var mNote = document.getElementById("mNote");
   var catChips = document.getElementById("catChips");
-  var noteInput = document.getElementById("noteInput");
 
   function todayStr() {
     var d = new Date();
@@ -183,14 +211,41 @@
       catChips.appendChild(b);
     });
   }
-  function setType(t) {
+  function openEntry(t) {
     type = t;
-    btnOut.className = "type-btn" + (t === "out" ? " on-out" : "");
-    btnIn.className = "type-btn" + (t === "in" ? " on-in" : "");
+    entryTitle.textContent = t === "out" ? "记一笔支出" : "记一笔收入";
+    entryTitle.className = "entry-title " + t;
     fillCats();
+    mAmount.value = "";
+    mNote.value = "";
+    mDate.value = todayStr();
+    entryOverlay.classList.add("show");
+    setTimeout(function () { mAmount.focus(); }, 50);
   }
-  btnOut.addEventListener("click", function () { setType("out"); });
-  btnIn.addEventListener("click", function () { setType("in"); });
+  function closeEntry() { entryOverlay.classList.remove("show"); }
+  function confirmEntry() {
+    var amount = Math.round(parseFloat(mAmount.value) * 100) / 100;
+    if (!amount || amount <= 0) { alert("先填一个大于 0 的金额"); mAmount.focus(); return; }
+    if (!mDate.value) { alert("先选一个日期"); return; }
+    var list = load();
+    list.push({
+      id: Date.now(),
+      type: type,
+      date: mDate.value,
+      amount: amount,
+      cat: selectedCat,
+      note: mNote.value.trim()
+    });
+    save(list);
+    closeEntry();
+    render();
+  }
+
+  document.getElementById("btnOut").addEventListener("click", function () { openEntry("out"); });
+  document.getElementById("btnIn").addEventListener("click", function () { openEntry("in"); });
+  document.getElementById("entryOk").addEventListener("click", confirmEntry);
+  document.getElementById("entryCancel").addEventListener("click", closeEntry);
+  entryOverlay.addEventListener("click", function (e) { if (e.target === entryOverlay) closeEntry(); });
 
   function sum(list, pred) {
     var income = 0, out = 0;
@@ -256,27 +311,6 @@
     });
   }
 
-  document.getElementById("addBtn").addEventListener("click", function () {
-    var amount = Math.round(parseFloat(amountInput.value) * 100) / 100;
-    if (!amount || amount <= 0) { alert("先填一个大于 0 的金额"); amountInput.focus(); return; }
-    if (!dateInput.value) { alert("先选一个日期"); return; }
-    var list = load();
-    list.push({
-      id: Date.now(),
-      type: type,
-      date: dateInput.value,
-      amount: amount,
-      cat: selectedCat,
-      note: noteInput.value.trim()
-    });
-    save(list);
-    amountInput.value = "";
-    noteInput.value = "";
-    render();
-  });
-
-  dateInput.value = todayStr();
-  setType("out");
   render();
 })();
 </script>
