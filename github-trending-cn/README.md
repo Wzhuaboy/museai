@@ -47,6 +47,12 @@ github-trending-cn/
 
 ## 索引
 
+### 2026-11-07
+
+- 日榜第 1 名：[Zed：Atom 原班人马做的高速多人代码编辑器](2026-11-07/zed-industries-zed.md)（zed-industries/zed）
+- 周榜第 2 名：[Claude Code Game Studios：把 Claude Code 变成一间完整游戏工作室](2026-11-07/Donchitos-Claude-Code-Game-Studios.md)（Donchitos/Claude-Code-Game-Studios）
+- 月榜第 2 名：[ArtCraft：给艺术家的 AI 创作 IDE](2026-11-07/storytold-artcraft.md)（storytold/artcraft）
+
 ### 2026-11-06
 
 - 日榜第 2 名：[skills：给真正干工程的人准备的 agent 技能合集](2026-11-06/mattpocock-skills.md)（mattpocock/skills）
