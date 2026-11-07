@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>回执汇总 | 2027年1月23日婚礼</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:#f3e9dc;color:#3a2a24;line-height:1.7}
+.wrap{max-width:640px;margin:0 auto;background:#fdf8ef;min-height:100vh;padding:26px 18px 40px}
+h1{font-size:22px;color:#7a1f1a;letter-spacing:2px}
+.sub{color:#8a7a6e;font-size:14px;margin-top:4px}
+.card{background:#fff;border:1px solid #eadfc8;border-radius:14px;padding:18px;margin-top:16px}
+input{width:100%;padding:12px;border:1px solid #ddd;border-radius:10px;font-size:16px}
+button{background:#b03a2e;color:#fff;border:0;padding:11px 18px;border-radius:999px;font-size:15px;cursor:pointer;margin:8px 8px 0 0}
+button.ghost{background:#fff;color:#b03a2e;border:1px solid #b03a2e}
+button:disabled{opacity:.5}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.cell{background:#fdf3e3;border-radius:10px;padding:12px;text-align:center}
+.cell b{display:block;font-size:26px;color:#7a1f1a}
+.cell span{font-size:13px;color:#8a7a6e}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{border-bottom:1px solid #eee;padding:8px 4px;text-align:left;vertical-align:top}
+th{color:#8a7a6e;font-size:13px}
+td .del{color:#b03a2e;background:none;border:0;padding:0;font-size:14px;cursor:pointer;margin:0}
+#msg{margin-top:10px;font-size:14px;color:#7a1f1a;min-height:20px}
+.note{font-size:13px;color:#8a7a6e;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>婚礼回执汇总</h1>
+  <p class="sub">2027年1月23日 星期六 · 午宴12:00 · 只有输对查看口令才能看到名单</p>
+  <div class="card">
+    <label style="font-size:14px;color:#5b4a42">查看口令</label>
+    <input id="keyInput" type="password" placeholder="输入查看口令" autocomplete="off">
+    <div>
+      <button id="viewBtn">查看汇总</button>
+      <button class="ghost" id="refreshBtn">刷新</button>
+      <button class="ghost" id="csvBtn">导出 CSV</button>
+    </div>
+    <p class="note">口令只存在你这台手机的浏览器里，不会发给别人。忘了口令跟慕斯说，可以帮你换一个新的。</p>
+    <div id="msg"></div>
+  </div>
+  <div class="card" id="statsCard" style="display:none">
+    <div class="grid">
+      <div class="cell"><b id="sTotal">0</b><span>总回执（条）</span></div>
+      <div class="cell"><b id="sPeople">0</b><span>一定到场（人）</span></div>
+      <div class="cell"><b id="sAtt">0</b><span>一定到场（条）</span></div>
+      <div class="cell"><b id="sMaybe">0</b><span>可能到场（条）</span></div>
+      <div class="cell"><b id="sMaybeP">0</b><span>可能到场（人）</span></div>
+      <div class="cell"><b id="sAbs">0</b><span>遗憾缺席（条）</span></div>
+    </div>
+    <p class="note">人数按回执里填的同行人数加总，“4人及以上”按 4 人计，是下限人数。</p>
+    <table>
+      <thead><tr><th>姓名</th><th>出席</th><th>人数</th><th>祝福 / 时间</th><th></th></tr></thead>
+      <tbody id="listBody"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+var API = "https://wedding-rsvp.wangzhanghua001023.workers.dev";
+var KEY_STORE = "wedding_admin_key";
+var curList = [];
+var keyInput = document.getElementById("keyInput");
+try { keyInput.value = localStorage.getItem(KEY_STORE) || ""; } catch (e) {}
+function msg(t) { document.getElementById("msg").textContent = t; }
+function load() {
+  var key = keyInput.value.trim();
+  if (!key) { msg("请先输入查看口令。"); return; }
+  msg("正在拉取…");
+  fetch(API + "/api/list", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: key }) })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) { msg(d.error === "wrong key" ? "口令不对，请重新输入。" : "拉取失败：" + (d.error || "未知错误")); return; }
+      try { localStorage.setItem(KEY_STORE, key); } catch (e) {}
+      curList = d.list || [];
+      document.getElementById("sTotal").textContent = d.total;
+      document.getElementById("sPeople").textContent = d.people;
+      document.getElementById("sAtt").textContent = d.attending;
+      document.getElementById("sMaybe").textContent = d.maybe;
+      document.getElementById("sMaybeP").textContent = d.peopleMaybe;
+      document.getElementById("sAbs").textContent = d.absent;
+      document.getElementById("statsCard").style.display = "block";
+      var tb = document.getElementById("listBody");
+      tb.innerHTML = "";
+      if (!curList.length) { tb.innerHTML = "<tr><td colspan='5'>还没有人提交回执。</td></tr>"; }
+      curList.forEach(function (r) {
+        var tr = document.createElement("tr");
+        var dt = new Date(r.ts);
+        var when = (dt.getMonth() + 1) + "月" + dt.getDate() + "日 " + dt.getHours() + ":" + String(dt.getMinutes()).padStart(2, "0");
+        tr.innerHTML = "<td></td><td></td><td></td><td></td><td></td>";
+        tr.children[0].textContent = r.name;
+        tr.children[1].textContent = r.attend;
+        tr.children[2].textContent = r.count;
+        tr.children[3].textContent = (r.wish || "") + "（" + when + "）";
+        var btn = document.createElement("button");
+        btn.className = "del"; btn.textContent = "删除";
+        btn.onclick = function () { delOne(r.name); };
+        tr.children[4].appendChild(btn);
+        tb.appendChild(tr);
+      });
+      msg("已更新，共 " + d.total + " 条回执。");
+    })
+    .catch(function () { msg("网络有问题，稍后再试。"); });
+}
+function delOne(name) {
+  var key = keyInput.value.trim();
+  if (!confirm("确定删除 " + name + " 这一条吗？")) return;
+  fetch(API + "/api/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: key, name: name }) })
+    .then(function (r) { return r.json(); })
+    .then(function (d) { if (d.ok) load(); else msg("删除失败：" + (d.error || "")); })
+    .catch(function () { msg("网络有问题，稍后再试。"); });
+}
+document.getElementById("viewBtn").addEventListener("click", load);
+document.getElementById("refreshBtn").addEventListener("click", load);
+document.getElementById("csvBtn").addEventListener("click", function () {
+  if (!curList.length) { msg("还没有数据可以导出。"); return; }
+  var rows = [["姓名", "出席", "人数", "祝福", "提交时间"]];
+  curList.forEach(function (r) {
+    rows.push([r.name, r.attend, r.count, r.wish || "", new Date(r.ts).toLocaleString("zh-CN")]);
+  });
+  var csv = "\ufeff" + rows.map(function (row) { return row.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "wedding-rsvp-20270123.csv";
+  a.click();
+});
+if (keyInput.value) load();
+</script>
+</body>
+</html>

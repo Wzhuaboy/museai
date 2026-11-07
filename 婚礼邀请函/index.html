@@ -181,6 +181,7 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
         <button class="btn" type="submit" style="width:100%;margin-top:16px;border:0;cursor:pointer">提交回执</button>
       </form>
       <div id="rsvpMsg"></div>
+      <p id="cloudStats" style="margin-top:8px;font-size:14px;color:var(--muted)">正在拉取云端回执数…</p>
       <div style="margin-top:10px"><button class="btn ghost" id="copyBtn" type="button">复制回执发给新人</button></div>
       <ul class="bless" id="blessList"></ul>
     </div>
@@ -254,14 +255,40 @@ function renderBless(){
   list.slice(-5).reverse().forEach(function(r){ var li=document.createElement('li'); li.textContent=r.name+'（'+r.attend+'，'+r.count+'）：'+(r.wish||'新婚快乐！'); ul.appendChild(li); });
 }
 renderBless();
+/* 云端回执：提交到 Cloudflare Worker + KV，新人汇总页能看到全部 */
+var RSVP_API = "https://wedding-rsvp.wangzhanghua001023.workers.dev";
+function showStats(d){
+  var el = document.getElementById('cloudStats');
+  if(!el || !d || !d.ok) return;
+  el.textContent = '云端已有 ' + d.total + ' 条回执 · 一定到场 ' + d.attending + ' 条、共 ' + d.people + ' 人' + (d.maybe ? ' · 可能到场 ' + d.maybe + ' 条' : '');
+}
+function loadStats(){
+  fetch(RSVP_API + "/api/stats").then(function(r){ return r.json(); }).then(showStats).catch(function(){ var el=document.getElementById('cloudStats'); if(el) el.textContent='云端回执数暂时拉不到，提交仍可正常用。'; });
+}
+loadStats();
 document.getElementById('rsvpForm').addEventListener('submit', function(e){
   e.preventDefault();
   var r={name:document.getElementById('fName').value.trim(), attend:document.getElementById('fAttend').value, count:document.getElementById('fCount').value, wish:document.getElementById('fWish').value.trim()};
   if(!r.name){ document.getElementById('rsvpMsg').textContent='请先填姓名。'; return; }
-  var list=[]; try{ list=JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){}
-  list.push(r); try{ localStorage.setItem(KEY, JSON.stringify(list)); }catch(e){}
-  renderBless();
-  document.getElementById('rsvpMsg').textContent='已收到，谢谢！记得点下方“复制回执”发给新人确认。';
+  document.getElementById('rsvpMsg').textContent='正在提交到云端…';
+  fetch(RSVP_API + "/api/rsvp", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(r)})
+    .then(function(res){ return res.json(); })
+    .then(function(d){
+      if(!d.ok){ throw new Error(d.error || 'submit failed'); }
+      var list=[]; try{ list=JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(err){}
+      var found=false;
+      for(var i=0;i<list.length;i++){ if(list[i].name===r.name){ list[i]=r; found=true; } }
+      if(!found) list.push(r);
+      try{ localStorage.setItem(KEY, JSON.stringify(list)); }catch(err){}
+      renderBless(); showStats(d);
+      document.getElementById('rsvpMsg').textContent = d.updated ? '已更新你在云端的回执，谢谢！' : '已收到，谢谢！你的回执已存到云端，新人能看到汇总。';
+    })
+    .catch(function(){
+      var list2=[]; try{ list2=JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(err){}
+      list2.push(r); try{ localStorage.setItem(KEY, JSON.stringify(list2)); }catch(err){}
+      renderBless();
+      document.getElementById('rsvpMsg').textContent='云端暂时没连上，已先存在你本机，联网后再提交一次即可。';
+    });
 });
 document.getElementById('copyBtn').addEventListener('click', function(){
   var name=document.getElementById('fName').value.trim()||'（未填姓名）';
