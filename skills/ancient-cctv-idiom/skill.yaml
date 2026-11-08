@@ -1,0 +1,7 @@
+name: ancient-cctv-idiom
+title: Ancient CCTV Idiom Stories
+description: Create Chinese idiom stories from an ancient surveillance-camera perspective with Gemini Pro Veo 3.1, 3x8s clips stitched in CapCut. Use when the user wants a new idiom episode, to revise a prompt, or to improve this skill.
+category: Video creation
+include_in_prompt: false
+version: 0.1
+created: 2026-11-08
