@@ -15,13 +15,13 @@
 
 1. 监控逻辑即寓意：机位不是装饰，要参与讲故事。掩耳盗铃里，摄像头就是揭穿他的证人。
 2. 时间戳必须有，秒数要走：格式固定为“约公元前X年 X月X日 XX:XX:XX · 地点 CAMx”，秒数全程递进，每秒 +1。年份只取朝代的大概范围（加“约”），月、日、时、分、秒为监控效果自拟的演绎时间，不是考证出的真实案发时间，教学卡里不写精确日期。
-3. 一镜一个 CAM，机位全程不动：绝不推、拉、摇、跟拍。转场只用硬切，不用淡入淡出。
+3. 一镜一个 CAM，机位全程不动：绝不推、拉、摇、跟拍。转场只用硬切，不用淡入淡出。画幅一律横屏 16:9，监控没有竖屏，绝不写 9:16，剪映比例也选 16:9。
 4. 每集结构固定：5 秒看懂故事，10 秒看到反转，3 秒背下成语。总长 25-30 秒。
 5. 开拍前先核服化道：朝代、衣服、道具对不上就不生成。战国穿战国衣服，不出现现代物。
 
 ## 工具与规格（已核实，2026-11-08）
 
-- Gemini App + Google AI Pro：单条最长 8 秒，Veo 3.1，支持 9:16 / 16:9，720p / 1080p / 4K，24fps。
+- Gemini App + Google AI Pro：单条最长 8 秒，Veo 3.1，选横屏 16:9，720p / 1080p，24fps。
 - Pro 和 Ultra 差在数量，不差在时长，单条都是 8 秒。
 - 一集 = 3 条 x 8 秒 = 24 秒故事 + 3 秒教学卡 = 27 秒成品。
 - 拼接：剪映手机版，免费。按 1、2、3 顺序导入，硬切，统一加时间戳文字，最后加教学卡，导出 1080p / 30fps。
@@ -48,7 +48,7 @@
 
 ```
 Static fixed high-angle surveillance camera mounted in the top corner, no camera movement, no pan, no tilt, no zoom, no tracking.
-Vertical 9:16, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion.
+Horizontal 16:9, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion.
 Ancient China, [朝代], [地点], night, dim oil-lamp light, stone floor, wooden pillars.
 One man only: [人物外貌 + 衣服，一句话写死，例如：thin middle-aged man in dark coarse cloth robe and black headscarf].
 No text, no subtitles, no timestamp burned in, no watermark, no modern objects, no cinematic camera moves.
@@ -81,3 +81,4 @@ No text, no subtitles, no timestamp burned in, no watermark, no modern objects, 
 - v0.1 2026-11-08：立项。定 5 条规矩、Gemini 3x8 秒 + 剪映拼接、第一条掩耳盗铃。
 - v0.1 2026-11-08：推到 GitHub Wzhuaboy/museai/skills/ancient-cctv-idiom/ 当总库，各大 AI 共用同一套。
 - v0.2 2026-11-08：改第 2 条死规矩：时间戳必须有，约公元前X年 X月X日 XX:XX:XX，秒数全程每秒 +1，月日时分秒为演绎时间。
+- v0.3 2026-11-08：他纠正：监控没有竖屏。画幅全改横屏 16:9，9:16 作废，Gemini 版和可灵版提示词、剪映比例全部同步改横屏。

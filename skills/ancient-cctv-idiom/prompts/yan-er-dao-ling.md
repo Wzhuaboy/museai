@@ -9,14 +9,14 @@
   - 第 2 条：23:47:16 - 23:47:23
   - 第 3 条：23:47:24 - 23:47:31
 - 机位：3 条全部同一机位，硬切。1 号 CAM1，2 号 CAM2，3 号 CAM1。
-- 用法：Gemini App 里点视频，选 9:16，一条一条粘下面的英文提示词，生成后存相册，再去剪映按 1、2、3 拼。
+- 用法：Gemini App 里点视频，选 16:9，一条一条粘下面的英文提示词，生成后存相册，再去剪映按 1、2、3 拼。
 
 ## 固定人物和场景（三条都一样，别改）
 
 - 人：thin middle-aged man in dark coarse cloth robe and black headscarf, straw sandals
 - 场景：ancient Chinese bell tower courtyard at night, a large bronze bell hanging from a wooden frame, stone floor, wooden pillars, dim oil-lamp light
 - 机位：static fixed high-angle surveillance camera mounted in the top corner, no camera movement, no pan, no tilt, no zoom, no tracking
-- 画质：vertical 9:16, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion
+- 画质：horizontal 16:9, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion
 - 禁止：no text, no subtitles, no timestamp burned in, no watermark, no modern objects, no music, no dialogue
 
 ## 第 1 条（8 秒）：溜进来
@@ -24,7 +24,7 @@
 中文意思：深夜钟楼，一个贼贴墙溜进来，抬头看大钟，慢慢走过去摸了一下钟。
 
 ```
-Static fixed high-angle surveillance camera mounted in the top corner, no camera movement, no pan, no tilt, no zoom, no tracking. Vertical 9:16, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion. Ancient China, Warring States period, a bell tower courtyard at night, a large bronze bell hanging from a wooden frame, stone floor, wooden pillars, dim oil-lamp light. One man only: a thin middle-aged man in dark coarse cloth robe and black headscarf, straw sandals. He sneaks in hugging the wall, looks around nervously, walks slowly toward the large bronze bell, reaches out and touches it. Only natural sounds, footsteps and night wind, no music, no dialogue. No text, no subtitles, no timestamp burned in, no watermark, no modern objects.
+Static fixed high-angle surveillance camera mounted in the top corner, no camera movement, no pan, no tilt, no zoom, no tracking. Horizontal 16:9, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion. Ancient China, Warring States period, a bell tower courtyard at night, a large bronze bell hanging from a wooden frame, stone floor, wooden pillars, dim oil-lamp light. One man only: a thin middle-aged man in dark coarse cloth robe and black headscarf, straw sandals. He sneaks in hugging the wall, looks around nervously, walks slowly toward the large bronze bell, reaches out and touches it. Only natural sounds, footsteps and night wind, no music, no dialogue. No text, no subtitles, no timestamp burned in, no watermark, no modern objects.
 ```
 
 ## 第 2 条（8 秒）：砸钟捂耳朵
@@ -32,7 +32,7 @@ Static fixed high-angle surveillance camera mounted in the top corner, no camera
 中文意思：他抱大钟抱不动，放下拿起锤子砸钟，钟一响，他立刻双手捂住自己的耳朵。
 
 ```
-Static fixed high-angle surveillance camera mounted in the top corner, no camera movement, no pan, no tilt, no zoom, no tracking. Vertical 9:16, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion. Ancient China, Warring States period, a bell tower courtyard at night, a large bronze bell hanging from a wooden frame, stone floor, wooden pillars, dim oil-lamp light. One man only: a thin middle-aged man in dark coarse cloth robe and black headscarf, straw sandals, same man as before. He tries to lift the large bronze bell with both arms, fails and puts it down, picks up a small hammer, strikes the bell once, the bell rings loudly, he immediately covers both of his ears with both hands in panic. Only natural sounds, a loud bell ring, no music, no dialogue. No text, no subtitles, no timestamp burned in, no watermark, no modern objects.
+Static fixed high-angle surveillance camera mounted in the top corner, no camera movement, no pan, no tilt, no zoom, no tracking. Horizontal 16:9, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion. Ancient China, Warring States period, a bell tower courtyard at night, a large bronze bell hanging from a wooden frame, stone floor, wooden pillars, dim oil-lamp light. One man only: a thin middle-aged man in dark coarse cloth robe and black headscarf, straw sandals, same man as before. He tries to lift the large bronze bell with both arms, fails and puts it down, picks up a small hammer, strikes the bell once, the bell rings loudly, he immediately covers both of his ears with both hands in panic. Only natural sounds, a loud bell ring, no music, no dialogue. No text, no subtitles, no timestamp burned in, no watermark, no modern objects.
 ```
 
 ## 第 3 条（8 秒）：还在砸，抬头看镜头
@@ -40,7 +40,7 @@ Static fixed high-angle surveillance camera mounted in the top corner, no camera
 中文意思：他捂着耳朵还在砸，钟来回晃，最后抬头直视镜头，定格。
 
 ```
-Static fixed high-angle surveillance camera mounted in the top corner, no camera movement, no pan, no tilt, no zoom, no tracking. Vertical 9:16, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion. Ancient China, Warring States period, a bell tower courtyard at night, a large bronze bell hanging from a wooden frame, stone floor, wooden pillars, dim oil-lamp light. One man only: a thin middle-aged man in dark coarse cloth robe and black headscarf, straw sandals, same man as before. He keeps striking the bell with the hammer while covering his ears with his other hand, the bell swings back and forth, he stops, looks up directly into the surveillance camera, freezes and stares. Only natural sounds, bell ringing fading, no music, no dialogue. No text, no subtitles, no timestamp burned in, no watermark, no modern objects.
+Static fixed high-angle surveillance camera mounted in the top corner, no camera movement, no pan, no tilt, no zoom, no tracking. Horizontal 16:9, low-resolution CCTV footage, black-and-white with low saturation cold green tint, film grain, noise, scan lines, slight fisheye distortion. Ancient China, Warring States period, a bell tower courtyard at night, a large bronze bell hanging from a wooden frame, stone floor, wooden pillars, dim oil-lamp light. One man only: a thin middle-aged man in dark coarse cloth robe and black headscarf, straw sandals, same man as before. He keeps striking the bell with the hammer while covering his ears with his other hand, the bell swings back and forth, he stops, looks up directly into the surveillance camera, freezes and stares. Only natural sounds, bell ringing fading, no music, no dialogue. No text, no subtitles, no timestamp burned in, no watermark, no modern objects.
 ```
 
 ## 剪映拼接（3 步）
