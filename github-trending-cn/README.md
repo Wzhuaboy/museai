@@ -47,6 +47,11 @@ github-trending-cn/
 
 ## 索引
 
+### 2026-11-08
+
+- 日榜第 1 名：[agent-browser：给 AI agent 用的浏览器自动化命令行工具](2026-11-08/vercel-labs-agent-browser.md)（vercel-labs/agent-browser）
+- 周榜第 7 名：[OpenMausBot：开源的 Grok Bot 替代品，每台机器人都有一台电脑](2026-11-08/milind-soni-OpenMausBot.md)（milind-soni/OpenMausBot）
+
 ### 2026-11-07
 
 - 日榜第 1 名：[Zed：Atom 原班人马做的高速多人代码编辑器](2026-11-07/zed-industries-zed.md)（zed-industries/zed）
