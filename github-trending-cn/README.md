@@ -47,6 +47,12 @@ github-trending-cn/
 
 ## 索引
 
+### 2026-11-09
+
+- 日榜第 1 名：[Sherlock：拿一个用户名，在 400 多个社交网站上找账号](2026-11-09/sherlock-project-sherlock.md)（sherlock-project/sherlock）
+- 周榜第 10 名：[Scrapling：从一次请求到整站爬取，一个 Python 网页抓取框架全包](2026-11-09/D4Vinci-Scrapling.md)（D4Vinci/Scrapling）
+- 月榜第 11 名：[DeepTutor：终身个性化 AI 家教，辅导、研究、创作、练习收进一个系统](2026-11-09/HKUDS-DeepTutor.md)（HKUDS/DeepTutor）
+
 ### 2026-11-08
 
 - 日榜第 1 名：[agent-browser：给 AI agent 用的浏览器自动化命令行工具](2026-11-08/vercel-labs-agent-browser.md)（vercel-labs/agent-browser）
