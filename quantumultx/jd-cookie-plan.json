@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "name": "取京东Cookie",
+  "actions": [
+    {
+      "identifier": "is.workflow.actions.getclipboard",
+      "params": {
+        "UUID": "6FB94D87-199C-4BA8-A4DA-605CFEF94054"
+      },
+      "as": "Clipboard"
+    },
+    {
+      "identifier": "is.workflow.actions.text.match",
+      "params": {
+        "UUID": "F697C612-BD97-4413-B550-8B79052E0D77",
+        "WFMatchTextPattern": "pt_key=[^;]+",
+        "WFMatchTextCaseSensitive": true,
+        "WFInput": {
+          "Type": "Variable",
+          "Variable": {
+            "Value": {
+              "OutputUUID": "6FB94D87-199C-4BA8-A4DA-605CFEF94054",
+              "OutputName": "Clipboard",
+              "Type": "ActionOutput"
+            },
+            "WFSerializationType": "WFTextTokenAttachment"
+          }
+        }
+      },
+      "as": "pt_key"
+    },
+    {
+      "identifier": "is.workflow.actions.text.match",
+      "params": {
+        "UUID": "F0054B29-F7CD-4C0C-85A0-F6DFBEEBF67C",
+        "WFMatchTextPattern": "pt_pin=[^;]+",
+        "WFMatchTextCaseSensitive": true,
+        "WFInput": {
+          "Type": "Variable",
+          "Variable": {
+            "Value": {
+              "OutputUUID": "6FB94D87-199C-4BA8-A4DA-605CFEF94054",
+              "OutputName": "Clipboard",
+              "Type": "ActionOutput"
+            },
+            "WFSerializationType": "WFTextTokenAttachment"
+          }
+        }
+      },
+      "as": "pt_pin"
+    },
+    {
+      "identifier": "is.workflow.actions.gettext",
+      "params": {
+        "UUID": "3C53DAEC-09CC-4D99-B64C-44C60AC15D68",
+        "WFTextActionText": {
+          "Value": {
+            "string": "￼;￼;",
+            "attachmentsByRange": {
+              "{0, 1}": {
+                "OutputName": "pt_key",
+                "OutputUUID": "F697C612-BD97-4413-B550-8B79052E0D77",
+                "Type": "ActionOutput"
+              },
+              "{2, 1}": {
+                "OutputName": "pt_pin",
+                "OutputUUID": "F0054B29-F7CD-4C0C-85A0-F6DFBEEBF67C",
+                "Type": "ActionOutput"
+              }
+            }
+          },
+          "WFSerializationType": "WFTextTokenString"
+        }
+      },
+      "as": "JD Cookie"
+    },
+    {
+      "identifier": "is.workflow.actions.setclipboard",
+      "params": {
+        "UUID": "3C5CC988-BCE8-4452-B5DC-30553101E44E",
+        "WFLocalOnly": false,
+        "WFExpirationDate": {}
+      }
+    },
+    {
+      "id": "notify",
+      "params": {
+        "text": "已提取，粘贴到青龙 JD_COOKIE"
+      }
+    }
+  ]
+}
