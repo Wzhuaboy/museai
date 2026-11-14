@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-10",
+  "count": 1,
+  "scripts": [
+    {
+      "id": 2825,
+      "filename": "酷狗免费版（修复版）.py",
+      "upload_time": "2026-11-10 22:58:57",
+      "api_hash": "33f130ce3b1012290ad0ac4ef48cd03e4a80ba60e13faab2ae83dfc3ca4a9237",
+      "download_sha256": "e4571afed210548a8eab6ef864a37da9c2e2eda025b9779bdf194f9e755e694f",
+      "verify": "mismatch",
+      "bytes": 38447
+    }
+  ]
+}
