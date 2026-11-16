@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-14",
+  "count": 1,
+  "scripts": [
+    {
+      "id": 2828,
+      "filename": "千阅宝.js",
+      "upload_time": "2026-11-14 13:06:07",
+      "api_hash": "20f865a66b80988e5a424ca05373f43b838b6d9bb5720dd9ce432f2f3ed8ee2e",
+      "download_sha256": "308713023f39552d454a6c228aef24164fae40c7f8c9c100514eb51466ab81f8",
+      "verify": "strip_match_head11_tail12",
+      "bytes": 14361
+    }
+  ]
+}
