@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-03",
+  "count": 1,
+  "scripts": [
+    {
+      "id": 2817,
+      "filename": "电信白嫖话费(自动任务+推送+自动续期+积分自定义兑换).py",
+      "upload_time": "2026-11-03 11:42:31",
+      "api_hash": "0b04ea9bd90bd92582c04b5e04653d6862306adc26130416a16d86ce8290d44d",
+      "download_sha256": "0b04ea9bd90bd92582c04b5e04653d6862306adc26130416a16d86ce8290d44d",
+      "verify": "full_match",
+      "bytes": 47606
+    }
+  ]
+}
