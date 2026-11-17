@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-20",
+  "count": 3,
+  "scripts": [
+    {
+      "id": 2607,
+      "filename": "中国联通_v1.2.1_20261002.py",
+      "upload_time": "2026-10-20 03:12:03",
+      "api_hash": "d025b36f19fbd26deb7cd031a6b492d14ad11857fc91c018deb36885a5062950",
+      "download_sha256": "d025b36f19fbd26deb7cd031a6b492d14ad11857fc91c018deb36885a5062950",
+      "verify": "full_match",
+      "bytes": 356609
+    },
+    {
+      "id": 2608,
+      "filename": "电信白嫖话费(自动任务+推送+自动续期+积分自定义兑换).py",
+      "upload_time": "2026-10-20 13:26:35",
+      "api_hash": "3ec60ac1f9196e2c09836ddfbc59717f955f5f46333f8f654782080f9cbccfb7",
+      "download_sha256": "0b04ea9bd90bd92582c04b5e04653d6862306adc26130416a16d86ce8290d44d",
+      "verify": "mismatch",
+      "bytes": 47606
+    },
+    {
+      "id": 2610,
+      "filename": "小米💰🐆(浏览、试用、抢兑).py",
+      "upload_time": "2026-10-20 14:11:31",
+      "api_hash": "f4af6e7be9e2c5519cfd6b9396c5f80f9f8d1012989732b357acf63e23547884",
+      "download_sha256": "319bf7c994831fc4d9c2faa1fc8184f2607e624cf4ea33fa0ba1e3681186e399",
+      "verify": "mismatch",
+      "bytes": 30147
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-01",
+  "count": 3,
+  "scripts": [
+    {
+      "id": 2812,
+      "filename": "羊毛秒到自动提现.py",
+      "upload_time": "2026-11-01 01:19:26",
+      "api_hash": "8dc078f210b1998db8ce993e2b39f9310698ad93476caf260941489c803518ad",
+      "download_sha256": "8dc078f210b1998db8ce993e2b39f9310698ad93476caf260941489c803518ad",
+      "verify": "full_match",
+      "bytes": 3682
+    },
+    {
+      "id": 2813,
+      "filename": "猫猫阅读.py",
+      "upload_time": "2026-11-01 16:01:49",
+      "api_hash": "b0db29c4cc9cddedc7526278dfd7242d287c7a83f486133a19338b513e6de905",
+      "download_sha256": "64e2515a5f55f7abb608f37fb68ee741b8006c302596aa27eb41eeef73ea7ec0",
+      "verify": "strip_match_head11_tail12",
+      "bytes": 45308
+    },
+    {
+      "id": 2814,
+      "filename": "轻客-青龙.js",
+      "upload_time": "2026-11-01 17:11:21",
+      "api_hash": "1ac468398c298e4b896f0d527c669ab35906fb896f104ede9df8c0e50057d254",
+      "download_sha256": "393993de5d3a66365536a786d15fee07e8e590ce0ff3ddaa3a9baf2c58ab0a9a",
+      "verify": "strip_match_head11_tail12",
+      "bytes": 161218
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-23",
+  "count": 3,
+  "scripts": [
+    {
+      "id": 2719,
+      "filename": "巨浪.py",
+      "upload_time": "2026-10-23 15:08:38",
+      "api_hash": "105383ba0e6bfbac677c3281666a56895d7b9b67c0e81c37c1c8871a24dfb10c",
+      "download_sha256": "e3ddd447c685b5272bee482addc2ead14d62142c67225162da003ef2ab91825c",
+      "verify": "mismatch",
+      "bytes": 17052
+    },
+    {
+      "id": 2721,
+      "filename": "牛来一条龙(繁星世界二台).py",
+      "upload_time": "2026-10-23 17:39:20",
+      "api_hash": "a35e404d8d61be8741459304792726d60e2223a6666218cfeaee0171bcf50b4f",
+      "download_sha256": "f891952b76e9cbc56fe750224a031e205d73872f20e8c95dcef734b286243af8",
+      "verify": "strip_match_head11_tail12",
+      "bytes": 43216
+    },
+    {
+      "id": 2722,
+      "filename": "niulai_ql.js",
+      "upload_time": "2026-10-23 22:18:32",
+      "api_hash": "a5e3743dcff70ac89caafe3af4fea65435c70a8c6b167b2f8f9d2505eed1597f",
+      "download_sha256": "23d03190be9035547c449bf7c59cacb9f860018f2ad8bd539acf7ffc922419a7",
+      "verify": "strip_match_head11_tail12",
+      "bytes": 36198
+    }
+  ]
+}

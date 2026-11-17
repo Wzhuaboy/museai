@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-02",
+  "count": 2,
+  "scripts": [
+    {
+      "id": 2815,
+      "filename": "快音全自动一体化修复签到.py",
+      "upload_time": "2026-11-02 03:28:12",
+      "api_hash": "e8fb351ad08e82bc57217ff84420ed9eb89815914e8aa8dc46e2b425eb767867",
+      "download_sha256": "c33f0c46ec4b28057ea46f09bea6442d1dfc766cbb1d7bab078f7b61b50dd5de",
+      "verify": "strip_match_head11_tail12",
+      "bytes": 67709
+    },
+    {
+      "id": 2816,
+      "filename": "新城镇时代.py",
+      "upload_time": "2026-11-02 22:13:11",
+      "api_hash": "1b62d68e413cf398d95674f5c4b27218858b241f636e8264c9696b61fd8991af",
+      "download_sha256": "2d53595c6670fe0ea053002832c2b9022145d69bfffbbb7be88e565d173ffdb4",
+      "verify": "mismatch",
+      "bytes": 17953
+    }
+  ]
+}
