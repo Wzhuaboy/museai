@@ -32,7 +32,7 @@
   .score-num.pop { animation: scorePop .3s ease; }
   @keyframes scorePop { 40% { transform: scale(1.35); } }
   .poem {
-    margin-top: 18px; background: #fff; border-radius: 12px; padding: 14px 16px;
+    margin: 10px 0 12px; background: #fff; border-radius: 12px; padding: 14px 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
   }
   .poem-text {
@@ -135,6 +135,10 @@
     <div class="score" id="scoreBox"><span class="score-label">得分</span><span class="score-num" id="scoreNum">0</span></div>
   </div>
   <h1>数字合并</h1>
+  <div class="poem" id="poemBox">
+    <div class="poem-text" id="poemText"></div>
+    <div class="poem-author" id="poemAuthor"></div>
+  </div>
   <div class="lives" id="livesBar">
     <span class="lives-label">剩余点击</span>
     <div class="lives-track" id="livesTrack"><div class="lives-seg"></div><div class="lives-seg"></div><div class="lives-seg"></div><div class="lives-seg"></div><div class="lives-seg"></div></div>
@@ -166,10 +170,6 @@
   </div>
   <div class="board" id="board"></div>
   <div class="actions"><button id="resetBtn" type="button">重置本局</button></div>
-  <div class="poem" id="poemBox">
-    <div class="poem-text" id="poemText"></div>
-    <div class="poem-author" id="poemAuthor"></div>
-  </div>
 </div>
 <script>
 (function () {
@@ -233,7 +233,9 @@
   var livesNoteEl = document.getElementById("livesNote");
 
   function updateLives() {
-    // 五格隔断：亮着的格子数 = 剩余次数；满 5 格绿色（hue 120），剩 1 格红色（hue 0），中间渐变
+    // 只更新五格隔断；次数用完的提示和复活面板不在这里定，
+    // 等一次点击的合并全部结算完再由 settleOutState() 定，
+    // 否则点完最后一下能合并时，面板会先闪一下再消失
     var hue = lives <= 0 ? 0 : Math.round((lives - 1) / (START_LIVES - 1) * 120);
     for (var i = 0; i < livesSegs.length; i++) {
       if (i < lives) {
@@ -244,10 +246,14 @@
         livesSegs[i].style.background = "";
       }
     }
+  }
+
+  function settleOutState() {
+    // 在一次点击的合并全部结算完后调用：次数真的用完了才弹复活面板
     if (lives <= 0) {
       livesBar.classList.add("out");
       livesNoteEl.textContent = "次数用完了，背诗复活或重置本局";
-      // 次数用完弹出背诗复活；正在答题时别打断
+      // 正在答题时别打断
       if (reviveMode !== "quiz") setRevive("choice");
     } else {
       livesBar.classList.remove("out");
@@ -462,7 +468,8 @@
     }
     if (got === currentQuiz.answer) {
       lives = Math.min(START_LIVES, lives + REVIVE_LIVES);
-      updateLives(); // 次数回来了，面板收起
+      updateLives();
+      settleOutState(); // 面板收起、提示恢复默认
       livesNoteEl.textContent = "答对了！恢复 " + REVIVE_LIVES + " 次点击";
       setTimeout(function () {
         if (lives > 0) livesNoteEl.textContent = "点一次 -1，合并一次 +1";
@@ -657,7 +664,11 @@
     board[r][c] += 1;
     sfxClick();
     render({ bump: [r, c] });
-    resolveMerges([r, c]).then(function () { busy = false; if (lives <= 0) sfxOut(); });
+    resolveMerges([r, c]).then(function () {
+      busy = false;
+      settleOutState(); // 合并全部结算完才定：次数真用完了才弹复活面板
+      if (lives <= 0) sfxOut();
+    });
   });
 
   resetBtn.addEventListener("click", function () {
@@ -666,6 +677,7 @@
     lives = START_LIVES;
     score = 0;
     updateLives();
+    settleOutState();
     updateScore();
     showPoem();
     sfxReset();
@@ -673,6 +685,7 @@
   });
 
   updateLives();
+  settleOutState();
   updateScore();
   showPoem();
   render({});
