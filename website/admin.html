@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小站管理 - 杂七杂八的小站</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: #faf7f2; color: #333; min-height: 100vh; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 40px; }
+.back { display: inline-block; color: #2f80ed; text-decoration: none; font-size: 14px; margin-bottom: 14px; }
+h1 { font-size: 26px; margin-bottom: 6px; }
+.sub { color: #999; font-size: 14px; margin-bottom: 18px; line-height: 1.6; }
+.card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.05); margin-bottom: 14px; }
+.card h2 { font-size: 16px; margin-bottom: 10px; }
+.note { color: #888; font-size: 13px; line-height: 1.7; }
+.note a { color: #2f80ed; }
+input[type="text"], input[type="password"], select { width: 100%; padding: 9px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 8px; background: #fff; }
+button { padding: 9px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-blue { background: #2f80ed; color: #fff; }
+.btn-green { background: #27ae60; color: #fff; }
+.btn-grey { background: #eee; color: #666; }
+.btn-red { background: #fff; color: #e74c3c; border: 1px solid #e74c3c; }
+#status { font-size: 14px; margin: 10px 0; min-height: 20px; }
+#status.ok { color: #27ae60; }
+#status.err { color: #e74c3c; }
+.group { margin-bottom: 20px; }
+.group > h2 { font-size: 18px; margin: 18px 0 10px; }
+.group > h2 .cnt { font-size: 13px; color: #999; font-weight: 400; }
+.row { background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,.05); border-left: 5px solid #2f80ed; }
+.row.off { opacity: .55; }
+.row .head { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.row .head input { flex: 1; margin-bottom: 0; }
+.sync { flex: none; width: 86px; padding: 8px 0; }
+.sync.on { background: #27ae60; color: #fff; }
+.sync.off { background: #eee; color: #888; }
+.row .foot { display: flex; gap: 8px; }
+.row .foot select { flex: 1; margin-bottom: 0; }
+.row .foot input { flex: 1; margin-bottom: 0; }
+.row .foot .del { flex: none; padding: 8px 12px; }
+.savebar { position: sticky; bottom: 0; background: #faf7f2; padding: 12px 0; display: flex; gap: 10px; border-top: 1px solid #eee; }
+.savebar .btn-green { flex: 1; padding: 12px 0; font-size: 16px; }
+details { margin-top: 6px; }
+details summary { color: #2f80ed; font-size: 14px; cursor: pointer; }
+details ol { margin: 10px 0 4px 20px; color: #666; font-size: 13px; line-height: 1.9; }
+details code { background: #f0f0f0; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.cand { display: flex; gap: 8px; align-items: center; background: #fff; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; box-shadow: 0 1px 5px rgba(0,0,0,.05); }
+.cand .nm { flex: 1; font-size: 14px; word-break: break-all; }
+.cand select { width: 110px; flex: none; margin-bottom: 0; }
+.cand button { flex: none; }
+footer { text-align: center; color: #aaa; font-size: 12px; padding: 20px 16px; }
+footer a { color: #aaa; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← 回小站首页</a>
+  <h1>小站管理</h1>
+  <p class="sub">在这里选哪些项目同步到小站上。开关打开就是同步（在小站上显示），关掉就是不同步（隐藏起来，随时能再打开）。改完点最下面的「保存到 GitHub」才生效。</p>
+
+  <div class="card">
+    <h2>令牌 <span id="tokenState" style="font-size:13px;color:#999;font-weight:400"></span></h2>
+    <input type="password" id="tokenInput" placeholder="粘贴 github_pat_ 开头的令牌">
+    <div style="display:flex;gap:8px">
+      <button class="btn-blue" id="saveTokenBtn" type="button">保存令牌</button>
+      <button class="btn-grey" id="clearTokenBtn" type="button">清除令牌</button>
+    </div>
+    <details>
+      <summary>怎么建令牌？点开看步骤</summary>
+      <ol>
+        <li>打开 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">新建细粒度令牌</a>（GitHub 登录状态下直接进）</li>
+        <li>Token name 随便填，比如 <code>xiaozhan-admin</code>；Expiration 选 90 天</li>
+        <li>Repository access 选 <code>Only select repositories</code>，勾上 <code>museai</code></li>
+        <li>往下找到 Repository permissions 里的 <code>Contents</code>，选 <code>Read and write</code></li>
+        <li>点 <code>Generate token</code>，复制那串 <code>github_pat_…</code>，只显示一次，贴到上面保存</li>
+      </ol>
+      <p class="note">令牌只存在你这台设备的浏览器里，不会进仓库。别人就算打开这个管理页，没有令牌也保存不了。这个管理页没有放在小站首页上，知道链接才能打开。</p>
+    </details>
+  </div>
+
+  <div id="status"></div>
+  <div id="groups"><p class="note">正在加载项目…</p></div>
+
+  <div class="card">
+    <h2>从仓库扫描</h2>
+    <p class="note" style="margin-bottom:10px">扫一遍 museai 仓库，找出有页面（带 index.html 的文件夹）但还没上小站的，列出来让你挑。</p>
+    <button class="btn-blue" id="scanBtn" type="button">开始扫描</button>
+    <div id="cands" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>添加项目</h2>
+    <input type="text" id="addName" placeholder="项目名字，比如：我的新工具">
+    <input type="text" id="addUrl" placeholder="链接，比如：https://…（没有链接就空着）">
+    <select id="addSection"></select>
+    <input type="text" id="addDesc" placeholder="一句话介绍">
+    <input type="text" id="addAction" placeholder="按钮文字，默认：访问">
+    <button class="btn-blue" id="addBtn" type="button">添加项目</button>
+  </div>
+
+  <div class="savebar">
+    <button class="btn-green" id="saveBtn" type="button">保存到 GitHub</button>
+    <button class="btn-grey" id="reloadBtn" type="button">放弃修改</button>
+  </div>
+  <p class="note">保存后要等几分钟 GitHub Pages 才更新，微信里打开要再点「···」→「刷新」才能看到最新版。</p>
+</div>
+<footer><a href="mailto:2787768630@qq.com">联系人2787768630@qq.com</a></footer>
+<script>
+var REPO = "Wzhuaboy/museai";
+var FILE = "website/projects.json";
+var API = "https://api.github.com/repos/" + REPO + "/contents/" + FILE;
+var data = null;
+var dirty = false;
+var tokenKey = "xiaozhan_token";
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function status(msg, ok) {
+  var el = $("status");
+  el.textContent = msg || "";
+  el.className = ok === true ? "ok" : (ok === false ? "err" : "");
+}
+function getToken() { return (localStorage.getItem(tokenKey) || "").trim(); }
+function refreshTokenState() {
+  $("tokenState").textContent = getToken() ? "（已保存）" : "（未设置，保存不了）";
+}
+function markDirty() { dirty = true; status("有未保存的改动，记得点最下面的「保存到 GitHub」。"); }
+
+function sectionOptions(selected) {
+  return data.sections.map(function (s) {
+    return '<option value="' + s.id + '"' + (s.id === selected ? " selected" : "") + ">" + esc(s.name) + "</option>";
+  }).join("");
+}
+
+function render() {
+  var box = $("groups");
+  var html = "";
+  data.sections.forEach(function (s) {
+    var list = data.projects.filter(function (p) { return p.section === s.id; });
+    var vis = list.filter(function (p) { return p.visible; }).length;
+    html += '<div class="group"><h2>' + esc(s.name) + ' <span class="cnt">同步 ' + vis + " / 共 " + list.length + " 个</span></h2>";
+    list.forEach(function (p) { html += rowHtml(p, s); });
+    html += "</div>";
+  });
+  box.innerHTML = html;
+  $("addSection").innerHTML = sectionOptions("shop");
+}
+
+function rowHtml(p, s) {
+  var cls = p.visible ? "" : " off";
+  var sync = p.visible
+    ? '<button type="button" class="sync on" data-act="toggle" data-id="' + p.id + '">同步</button>'
+    : '<button type="button" class="sync off" data-act="toggle" data-id="' + p.id + '">不同步</button>';
+  return '<div class="row' + cls + '" style="border-left-color:' + s.color + '" data-id="' + p.id + '">'
+    + '<div class="head"><input type="text" class="f-name" data-id="' + p.id + '" data-field="name" value="' + esc(p.name) + '" placeholder="项目名字">' + sync + "</div>"
+    + '<input type="text" class="f-url" data-id="' + p.id + '" data-field="url" value="' + esc(p.url || "") + '" placeholder="链接，可空">'
+    + '<input type="text" class="f-desc" data-id="' + p.id + '" data-field="desc" value="' + esc(p.desc || "") + '" placeholder="一句话介绍">'
+    + '<div class="foot"><select class="f-section" data-id="' + p.id + '" data-field="section">' + sectionOptions(p.section) + "</select>"
+    + '<input type="text" class="f-action" data-id="' + p.id + '" data-field="action" value="' + esc(p.action || "访问") + '" placeholder="按钮文字">'
+    + '<button type="button" class="btn-red del" data-act="del" data-id="' + p.id + '">删除</button></div>'
+    + "</div>";
+}
+
+function findProject(id) {
+  for (var i = 0; i < data.projects.length; i++) {
+    if (data.projects[i].id === id) return data.projects[i];
+  }
+  return null;
+}
+
+function load() {
+  status("正在加载…");
+  fetch("projects.json")
+    .then(function (r) { if (!r.ok) throw new Error("打不开"); return r.json(); })
+    .then(function (d) { data = d; render(); status("已加载，共 " + d.projects.length + " 个项目。", true); })
+    .catch(function () { status("项目列表打不开，刷新一下试试。", false); });
+}
+
+// 列表里的改动：开关、删除、改字
+$("groups").addEventListener("click", function (e) {
+  var t = e.target;
+  var act = t.getAttribute("data-act");
+  if (!act) return;
+  var p = findProject(t.getAttribute("data-id"));
+  if (!p) return;
+  if (act === "toggle") {
+    p.visible = !p.visible;
+    render(); markDirty();
+  } else if (act === "del") {
+    if (!confirm("确定把「" + p.name + "」从小站上删掉吗？（只是从列表里删，仓库里的东西不动）")) return;
+    data.projects = data.projects.filter(function (x) { return x.id !== p.id; });
+    render(); markDirty();
+  }
+});
+$("groups").addEventListener("input", function (e) {
+  var t = e.target;
+  var p = findProject(t.getAttribute("data-id"));
+  if (!p) return;
+  p[t.getAttribute("data-field")] = t.value;
+  markDirty();
+});
+$("groups").addEventListener("change", function (e) {
+  var t = e.target;
+  if (t.className.indexOf("f-section") < 0) return;
+  var p = findProject(t.getAttribute("data-id"));
+  if (!p) return;
+  p.section = t.value;
+  render(); markDirty();
+});
+
+// 添加项目
+$("addBtn").addEventListener("click", function () {
+  var name = $("addName").value.trim();
+  var url = $("addUrl").value.trim();
+  if (!name) { status("先填项目名字。", false); return; }
+  data.projects.push({
+    id: "p" + Date.now().toString(36),
+    section: $("addSection").value,
+    name: name,
+    desc: $("addDesc").value.trim(),
+    url: url,
+    visible: true,
+    action: $("addAction").value.trim() || "访问"
+  });
+  $("addName").value = ""; $("addUrl").value = ""; $("addDesc").value = ""; $("addAction").value = "";
+  render(); markDirty();
+  status("已添加「" + name + "」，记得保存。", true);
+});
+
+// 从仓库扫描未上站的页面
+$("scanBtn").addEventListener("click", function () {
+  var box = $("cands");
+  box.innerHTML = '<p class="note">正在扫描仓库…</p>';
+  fetch("https://api.github.com/repos/" + REPO + "/git/trees/main?recursive=1")
+    .then(function (r) { if (!r.ok) throw new Error("扫不到"); return r.json(); })
+    .then(function (tree) {
+      var folders = {};
+      (tree.tree || []).forEach(function (n) {
+        var m = /^([^\/]+)\/index\.html$/.exec(n.path || "");
+        if (m) folders[m[1]] = true;
+      });
+      var known = {};
+      data.projects.forEach(function (p) {
+        var m = /museai\/([^\/]+)\//.exec(p.url || "");
+        if (m) known[decodeURIComponent(m[1])] = true;
+      });
+      var cands = Object.keys(folders).filter(function (f) { return !known[f]; });
+      if (!cands.length) { box.innerHTML = '<p class="note">仓库里带页面的文件夹都已经在小站上了，没有新的。</p>'; return; }
+      var html = "";
+      cands.forEach(function (f) {
+        var url = "https://wzhuaboy.github.io/museai/" + encodeURIComponent(f) + "/";
+        html += '<div class="cand"><span class="nm">' + esc(f) + "<br><span style=\"color:#999;font-size:12px\">" + esc(url) + "</span></span>"
+          + '<select data-cand="' + esc(f) + '">' + sectionOptions("shop") + "</select>"
+          + '<button type="button" class="btn-blue" data-cand-add="' + esc(f) + '" data-url="' + esc(url) + '">添加</button></div>';
+      });
+      box.innerHTML = html;
+    })
+    .catch(function () { box.innerHTML = '<p class="note">扫描失败，可能是 GitHub 接口限流了，过一会儿再试。</p>'; });
+});
+$("cands").addEventListener("click", function (e) {
+  var t = e.target;
+  var f = t.getAttribute("data-cand-add");
+  if (!f) return;
+  var sel = document.querySelector('select[data-cand="' + f + '"]');
+  data.projects.push({
+    id: "p" + Date.now().toString(36),
+    section: sel ? sel.value : "shop",
+    name: f,
+    desc: "",
+    url: t.getAttribute("data-url"),
+    visible: true,
+    action: "访问"
+  });
+  render(); markDirty();
+  status("已添加「" + f + "」，记得保存。", true);
+});
+
+// 令牌
+$("saveTokenBtn").addEventListener("click", function () {
+  var v = $("tokenInput").value.trim();
+  if (!v) { status("先粘贴令牌。", false); return; }
+  localStorage.setItem(tokenKey, v);
+  $("tokenInput").value = "";
+  refreshTokenState();
+  status("令牌已保存，只存在这台设备的浏览器里。", true);
+});
+$("clearTokenBtn").addEventListener("click", function () {
+  localStorage.removeItem(tokenKey);
+  refreshTokenState();
+  status("令牌已清除。");
+});
+
+// 保存到 GitHub
+function b64encode(str) { return btoa(unescape(encodeURIComponent(str))); }
+$("saveBtn").addEventListener("click", function () {
+  var token = getToken();
+  if (!token) { status("先在上面填令牌并保存，保存要靠它。", false); return; }
+  if (!data) { status("项目列表还没加载好。", false); return; }
+  status("正在保存…");
+  data.updated = new Date().toISOString().slice(0, 10);
+  var body = JSON.stringify(data, null, 2) + "\n";
+  var headers = { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" };
+  fetch(API, { headers: headers })
+    .then(function (r) { if (!r.ok) throw new Error("读不到文件：" + r.status); return r.json(); })
+    .then(function (info) {
+      return fetch(API, {
+        method: "PUT",
+        headers: Object.assign({ "Content-Type": "application/json" }, headers),
+        body: JSON.stringify({ message: "小站管理：更新项目列表", content: b64encode(body), sha: info.sha, branch: "main" })
+      });
+    })
+    .then(function (r) {
+      if (r.status === 401) throw new Error("令牌不对或过期了，重新建一个贴进来。");
+      if (r.status === 403) throw new Error("令牌没有这个仓库的写权限，建令牌时 Contents 要选 Read and write。");
+      if (r.status === 409) throw new Error("有人刚改过这个文件，刷新页面重新加载再保存。");
+      if (!r.ok) throw new Error("保存失败：" + r.status);
+      return r.json();
+    })
+    .then(function () { dirty = false; status("已保存！等几分钟 GitHub Pages 更新，微信里要点「···」→「刷新」才能看到。", true); })
+    .catch(function (err) { status(err.message || "保存失败。", false); });
+});
+$("reloadBtn").addEventListener("click", function () {
+  if (dirty && !confirm("放弃还没保存的改动，重新加载吗？")) return;
+  dirty = false;
+  load();
+});
+
+refreshTokenState();
+load();
+</script>
+</body>
+</html>
