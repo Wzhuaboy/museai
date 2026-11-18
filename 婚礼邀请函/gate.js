@@ -1,5 +1,6 @@
 // 婚礼邀请函开门验证：点链接先验证，名字对了才开。
 // 名字只在服务器上比对，页面里没有正确答案；验证通过后这台设备不再重复验证。
+// 验证前：遮罩不透光、请帖内容藏起来、底下页面锁住滑不动（遮罩自己可以滑）。
 (function () {
   var API = "https://wedding-rsvp.wangzhanghua001023.workers.dev";
   var FLAG = "wedding_verified";
@@ -9,9 +10,31 @@
   var verified = false;
   try { verified = sessionStorage.getItem(FLAG) === "1"; } catch (e) {}
 
+  var wrap = document.querySelector(".wrap");
+  function hideContent() { if (wrap) wrap.style.display = "none"; }
+  function showContent() { if (wrap) wrap.style.display = ""; }
+
+  // 锁住底下页面的滚动：手指在遮罩里可以滑，落在底下就拦住
+  function blockBodyScroll(e) {
+    var t = e.target;
+    while (t) { if (t.id === "entry") return; t = t.parentElement; }
+    e.preventDefault();
+  }
+  function lockScroll() {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    document.addEventListener("touchmove", blockBodyScroll, { passive: false });
+  }
+  function unlockScroll() {
+    document.body.style.overflow = "";
+    document.documentElement.style.overflow = "";
+    document.removeEventListener("touchmove", blockBodyScroll);
+  }
+
   function showOpen() {
     var g = $("gateBox"); if (g) g.style.display = "none";
     var o = $("entryOpen"); if (o) o.style.display = "";
+    showContent();
   }
   function showStep1() {
     var g = $("gateBox"); if (g) g.style.display = "";
@@ -76,5 +99,14 @@
     if (el) el.addEventListener("keydown", function (e) { if (e.key === "Enter") doVerify(); });
   });
 
-  if (verified) showOpen(); else showStep1();
+  // 开场按钮一点，遮罩消失、请帖出现、滚动恢复
+  var entryBtn = $("entryBtn");
+  if (entryBtn) entryBtn.addEventListener("click", function () {
+    unlockScroll();
+    showContent();
+  });
+
+  // 初始状态：遮罩一起就锁滚动；没验证过先把请帖内容藏起来
+  lockScroll();
+  if (verified) showOpen(); else { hideContent(); showStep1(); }
 })();
