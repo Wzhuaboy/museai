@@ -209,14 +209,12 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
       <p style="margin-top:18px">你是新郎的朋友，还是新娘的朋友？</p>
       <button type="button" data-side="groom">我是新郎的朋友</button>
       <button type="button" data-side="bride">我是新娘的朋友</button>
-      <p class="small">选一边，填对新郎和新娘的名字才能打开邀请函</p>
+      <p class="small">选一边，填对新郎或新娘其中一个名字就能打开邀请函</p>
     </div>
     <div id="gateStep2" style="display:none">
       <p style="margin-top:18px" id="gateSideText"></p>
-      <label style="color:#fff;text-align:left">新郎名字</label>
-      <input id="gateGroom" type="text" placeholder="请输入新郎的名字" autocomplete="off">
-      <label style="color:#fff;text-align:left">新娘名字</label>
-      <input id="gateBride" type="text" placeholder="请输入新娘的名字" autocomplete="off">
+      <label style="color:#fff;text-align:left">新郎或新娘的名字</label>
+      <input id="gateName" type="text" placeholder="请输入新郎或新娘的名字" autocomplete="off">
       <button type="button" id="gateVerifyBtn">验证并开启邀请函</button>
       <p class="small"><a href="#" id="gateBack" style="color:#fff">换一边</a></p>
       <p id="gateMsg"></p>

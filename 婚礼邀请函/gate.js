@@ -1,5 +1,6 @@
 // 婚礼邀请函开门验证：点链接先验证，名字对了才开。
-// 名字只在服务器上比对，页面里没有正确答案；验证通过后这台设备不再重复验证。
+// 名字只在服务器上比对，页面里没有正确答案；认识新郎或新娘其中一位就行。
+// 验证通过后这台设备不再重复验证。
 // 验证前：遮罩不透光、请帖内容藏起来、底下页面锁住滑不动（遮罩自己可以滑）。
 (function () {
   var API = "https://wedding-rsvp.wangzhanghua001023.workers.dev";
@@ -46,7 +47,7 @@
     var s1 = $("gateStep1"); if (s1) s1.style.display = "none";
     var s2 = $("gateStep2"); if (s2) s2.style.display = "";
     var t = $("gateSideText");
-    if (t) t.textContent = side === "groom" ? "你是新郎的朋友，请填写新郎和新娘的名字" : "你是新娘的朋友，请填写新郎和新娘的名字";
+    if (t) t.textContent = side === "groom" ? "你是新郎的朋友，填新郎或新娘其中一位的名字" : "你是新娘的朋友，填新郎或新娘其中一位的名字";
     var m = $("gateMsg"); if (m) m.textContent = "";
   }
 
@@ -63,16 +64,15 @@
   function doVerify() {
     var vb = $("gateVerifyBtn");
     var msg = $("gateMsg");
-    var g = $("gateGroom").value;
-    var b = $("gateBride").value;
-    if (!g.trim() || !b.trim()) { msg.textContent = "两个名字都要填。"; return; }
+    var n = $("gateName").value;
+    if (!n.trim()) { msg.textContent = "请填写一个名字。"; return; }
     vb.disabled = true;
     vb.textContent = "正在验证…";
     msg.textContent = "";
     fetch(API + "/api/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ side: side, groom: g, bride: b })
+      body: JSON.stringify({ side: side, name: n })
     })
       .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
       .then(function (res) {
@@ -94,10 +94,8 @@
   }
   var vb2 = $("gateVerifyBtn");
   if (vb2) vb2.addEventListener("click", doVerify);
-  ["gateGroom", "gateBride"].forEach(function (id) {
-    var el = $(id);
-    if (el) el.addEventListener("keydown", function (e) { if (e.key === "Enter") doVerify(); });
-  });
+  var nameEl = $("gateName");
+  if (nameEl) nameEl.addEventListener("keydown", function (e) { if (e.key === "Enter") doVerify(); });
 
   // 开场按钮一点，遮罩消失、请帖出现、滚动恢复
   var entryBtn = $("entryBtn");

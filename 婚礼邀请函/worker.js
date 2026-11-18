@@ -124,7 +124,11 @@ export default {
     // 对了不记名、不写 KV；错了记失败次数，连续错 5 次锁 10 分钟
     if (url.pathname === "/api/verify" && request.method === "POST") {
       var vb = await request.json().catch(function () { return null; });
-      if (!vb || (vb.side !== "groom" && vb.side !== "bride") || typeof vb.groom !== "string" || typeof vb.bride !== "string" || !vb.groom.trim() || !vb.bride.trim() || vb.groom.length > 20 || vb.bride.length > 20) {
+      // 认识新郎或新娘其中一位就行：单名字（新版页面）或两个名字里对一个（旧版页面兼容）
+      var names = [];
+      if (vb && typeof vb.name === "string" && vb.name.trim()) names = [vb.name];
+      else if (vb && typeof vb.groom === "string" && typeof vb.bride === "string" && vb.groom.trim() && vb.bride.trim()) names = [vb.groom, vb.bride];
+      if (!vb || (vb.side !== "groom" && vb.side !== "bride") || !names.length || names.some(function (n) { return n.length > 20; })) {
         return jsonResponse({ ok: false, error: "bad input" }, 400, request);
       }
       var ip = clientIp(request);
@@ -134,7 +138,10 @@ export default {
       if (fail.until && Date.now() < fail.until) {
         return jsonResponse({ ok: false, error: "too many", retryAfter: Math.ceil((fail.until - Date.now()) / 1000) }, 429, request);
       }
-      var okName = (await sha256Hex(normName(vb.groom))) === GROOM_HASH && (await sha256Hex(normName(vb.bride))) === BRIDE_HASH;
+      var okName = false;
+      for (var i = 0; i < names.length; i++) {
+        if ((await sha256Hex(normName(names[i]))) === GROOM_HASH || (await sha256Hex(normName(names[i]))) === BRIDE_HASH) { okName = true; break; }
+      }
       if (!okName) {
         fail.count = (fail.count || 0) + 1;
         if (fail.count >= VERIFY_MAX_FAILS) { fail.until = Date.now() + VERIFY_BLOCK_MS; fail.count = 0; }
