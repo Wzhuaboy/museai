@@ -10,7 +10,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:#f3e9dc;color:var(--ink);line-height:1.7}
-.wrap{max-width:480px;margin:0 auto;background:var(--ivory);min-height:100vh;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12)}
+.wrap{max-width:480px;margin:0 auto;background:var(--ivory);min-height:100vh;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(0,0,0,.12);display:none}
 img{display:block;max-width:100%}
 .center{text-align:center}
 .gold{color:var(--gold)}
@@ -95,6 +95,31 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
 </style>
 </head>
 <body>
+<div id="entry">
+  <div class="xi serif">囍</div>
+  <h2 class="serif" style="font-size:26px;letter-spacing:3px;margin-top:10px">婚礼邀请函</h2>
+  <p>2027年1月23日 星期六 · 午宴12:00</p>
+  <div id="gateBox">
+    <div id="gateStep1">
+      <p style="margin-top:18px">你是新郎的朋友，还是新娘的朋友？</p>
+      <button type="button" data-side="groom">我是新郎的朋友</button>
+      <button type="button" data-side="bride">我是新娘的朋友</button>
+      <p class="small">选一边，填对新郎或新娘其中一个名字就能打开邀请函</p>
+    </div>
+    <div id="gateStep2" style="display:none">
+      <p style="margin-top:18px" id="gateSideText"></p>
+      <label style="color:#fff;text-align:left">新郎或新娘的名字</label>
+      <input id="gateName" type="text" placeholder="请输入新郎或新娘的名字" autocomplete="off">
+      <button type="button" id="gateVerifyBtn">验证并开启邀请函</button>
+      <p class="small"><a href="#" id="gateBack" style="color:#fff">换一边</a></p>
+      <p id="gateMsg"></p>
+    </div>
+  </div>
+  <div id="entryOpen" style="display:none">
+    <button id="entryBtn">开启邀请函 ♪</button>
+    <p class="small">点开启后会播放背景音乐，右上角可随时关闭</p>
+  </div>
+</div>
 <div id="petals"></div>
 <button id="musicBtn" class="off" title="背景音乐开 / 关" aria-label="背景音乐开关">&#9835;</button>
 <div class="wrap">
@@ -200,33 +225,8 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
 
 <div id="lightbox"><span id="lbClose">×</span><img id="lbImg" src="" alt="放大照片"></div>
 
-<div id="entry">
-  <div class="xi serif">囍</div>
-  <h2 class="serif" style="font-size:26px;letter-spacing:3px;margin-top:10px">婚礼邀请函</h2>
-  <p>2027年1月23日 星期六 · 午宴12:00</p>
-  <div id="gateBox">
-    <div id="gateStep1">
-      <p style="margin-top:18px">你是新郎的朋友，还是新娘的朋友？</p>
-      <button type="button" data-side="groom">我是新郎的朋友</button>
-      <button type="button" data-side="bride">我是新娘的朋友</button>
-      <p class="small">选一边，填对新郎或新娘其中一个名字就能打开邀请函</p>
-    </div>
-    <div id="gateStep2" style="display:none">
-      <p style="margin-top:18px" id="gateSideText"></p>
-      <label style="color:#fff;text-align:left">新郎或新娘的名字</label>
-      <input id="gateName" type="text" placeholder="请输入新郎或新娘的名字" autocomplete="off">
-      <button type="button" id="gateVerifyBtn">验证并开启邀请函</button>
-      <p class="small"><a href="#" id="gateBack" style="color:#fff">换一边</a></p>
-      <p id="gateMsg"></p>
-    </div>
-  </div>
-  <div id="entryOpen" style="display:none">
-    <button id="entryBtn">开启邀请函 ♪</button>
-    <p class="small">点开启后会播放背景音乐，右上角可随时关闭</p>
-  </div>
-</div>
-
-<script src="gate.js"></script>
+<script src="gate.js" onerror="var w=document.querySelector('.wrap');if(w)w.style.display='block'"></script>
+<script>if(!window.__weddingGateReady){var w=document.querySelector('.wrap');if(w)w.style.display='block';}</script>
 <script>
 /* ===== 只改这里就能换内容 =====
    名字 / 酒店 / 地址填好后，下面的值改掉即可。

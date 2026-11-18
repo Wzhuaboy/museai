@@ -13,7 +13,7 @@
 
   var wrap = document.querySelector(".wrap");
   function hideContent() { if (wrap) wrap.style.display = "none"; }
-  function showContent() { if (wrap) wrap.style.display = ""; }
+  function showContent() { if (wrap) wrap.style.display = "block"; }
 
   // 锁住底下页面的滚动：手指在遮罩里可以滑，落在底下就拦住
   function blockBodyScroll(e) {
@@ -107,4 +107,5 @@
   // 初始状态：遮罩一起就锁滚动；没验证过先把请帖内容藏起来
   lockScroll();
   if (verified) showOpen(); else { hideContent(); showStep1(); }
+  window.__weddingGateReady = true;
 })();
