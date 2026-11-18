@@ -20,6 +20,28 @@
     -webkit-text-fill-color: transparent; color: transparent;
     filter: drop-shadow(0 2px 6px rgba(123, 97, 255, .35));
   }
+  .topbar { display: flex; align-items: center; gap: 10px; }
+  .topbar .fd { flex: 1; }
+  .score {
+    flex-shrink: 0; min-width: 64px; text-align: center;
+    background: #fff; border-radius: 12px; padding: 6px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .1);
+  }
+  .score-label { display: block; font-size: 12px; color: #999; letter-spacing: 2px; }
+  .score-num { display: block; font-size: 22px; font-weight: 800; color: #dd1f16; line-height: 1.2; }
+  .score-num.pop { animation: scorePop .3s ease; }
+  @keyframes scorePop { 40% { transform: scale(1.35); } }
+  .poem {
+    margin-top: 18px; background: #fff; border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+  }
+  .poem-text {
+    font-family: "STKaiti", "KaiTi", "STKaiti", serif;
+    font-size: 17px; line-height: 1.6; text-align: center; color: #333;
+  }
+  .poem-author { text-align: right; font-size: 13px; color: #999; margin-top: 6px; }
+  .poem.swap .poem-text, .poem.swap .poem-author { animation: poemIn .5s ease; }
+  @keyframes poemIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   h1 { text-align: center; font-size: 24px; margin: 6px 0 4px; letter-spacing: 2px; }
   .board {
     display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 8px;
@@ -80,7 +102,10 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="fd">-FD防沉迷-</div>
+  <div class="topbar">
+    <div class="fd">-FD防沉迷-</div>
+    <div class="score" id="scoreBox"><span class="score-label">得分</span><span class="score-num" id="scoreNum">0</span></div>
+  </div>
   <h1>数字合并</h1>
   <div class="lives" id="livesBar">
     <span class="lives-label">剩余点击</span>
@@ -89,6 +114,10 @@
   </div>
   <div class="board" id="board"></div>
   <div class="actions"><button id="resetBtn" type="button">重置本局</button></div>
+  <div class="poem" id="poemBox">
+    <div class="poem-text" id="poemText"></div>
+    <div class="poem-author" id="poemAuthor"></div>
+  </div>
 </div>
 <script>
 (function () {
@@ -225,6 +254,72 @@
       if (roll < acc) return DROP_WEIGHTS[i][0];
     }
     return 1;
+  }
+
+  // 古诗库：直接嵌在页面里（唐宋名句，均为公版），不用单独建库文件；
+  // 以后想加到几百首，再拆成 poems.json 单独加载
+  var POEMS = [
+    { text: "一泊沙来一泊去，一重浪灭一重生。", author: "【唐】白居易" },
+    { text: "床前明月光，疑是地上霜。", author: "【唐】李白" },
+    { text: "朝辞白帝彩云间，千里江陵一日还。", author: "【唐】李白" },
+    { text: "飞流直下三千尺，疑是银河落九天。", author: "【唐】李白" },
+    { text: "桃花潭水深千尺，不及汪伦送我情。", author: "【唐】李白" },
+    { text: "好雨知时节，当春乃发生。", author: "【唐】杜甫" },
+    { text: "两个黄鹂鸣翠柳，一行白鹭上青天。", author: "【唐】杜甫" },
+    { text: "会当凌绝顶，一览众山小。", author: "【唐】杜甫" },
+    { text: "留连戏蝶时时舞，自在娇莺恰恰啼。", author: "【唐】杜甫" },
+    { text: "红豆生南国，春来发几枝。", author: "【唐】王维" },
+    { text: "明月松间照，清泉石上流。", author: "【唐】王维" },
+    { text: "空山新雨后，天气晚来秋。", author: "【唐】王维" },
+    { text: "春眠不觉晓，处处闻啼鸟。", author: "【唐】孟浩然" },
+    { text: "碧玉妆成一树高，万条垂下绿丝绦。", author: "【唐】贺知章" },
+    { text: "离离原上草，一岁一枯荣。", author: "【唐】白居易" },
+    { text: "乱花渐欲迷人眼，浅草才能没马蹄。", author: "【唐】白居易" },
+    { text: "白日依山尽，黄河入海流。", author: "【唐】王之涣" },
+    { text: "欲穷千里目，更上一层楼。", author: "【唐】王之涣" },
+    { text: "白毛浮绿水，红掌拨清波。", author: "【唐】骆宾王" },
+    { text: "春蚕到死丝方尽，蜡炬成灰泪始干。", author: "【唐】李商隐" },
+    { text: "清明时节雨纷纷，路上行人欲断魂。", author: "【唐】杜牧" },
+    { text: "谁言寸草心，报得三春晖。", author: "【唐】孟郊" },
+    { text: "自古逢秋悲寂寥，我言秋日胜春朝。", author: "【唐】刘禹锡" },
+    { text: "但愿人长久，千里共婵娟。", author: "【宋】苏轼" },
+    { text: "不识庐山真面目，只缘身在此山中。", author: "【宋】苏轼" },
+    { text: "生当作人杰，死亦为鬼雄。", author: "【宋】李清照" },
+    { text: "众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。", author: "【宋】辛弃疾" },
+    { text: "山重水复疑无路，柳暗花明又一村。", author: "【宋】陆游" },
+    { text: "小荷才露尖尖角，早有蜻蜓立上头。", author: "【宋】杨万里" },
+    { text: "墙角数枝梅，凌寒独自开。", author: "【宋】王安石" }
+  ];
+
+  // 得分：3 个合 10 分，4 个合 30 分，5 个合 50 分，6 个及以上合 100 分
+  var score = 0;
+  var scoreNumEl = document.getElementById("scoreNum");
+  var poemBoxEl = document.getElementById("poemBox");
+  var poemTextEl = document.getElementById("poemText");
+  var poemAuthorEl = document.getElementById("poemAuthor");
+  var lastPoem = -1;
+
+  function scoreFor(n) {
+    if (n === 3) return 10;
+    if (n === 4) return 30;
+    if (n === 5) return 50;
+    return 100;
+  }
+  function updateScore() {
+    scoreNumEl.textContent = score;
+    scoreNumEl.classList.remove("pop");
+    void scoreNumEl.offsetWidth;
+    scoreNumEl.classList.add("pop");
+  }
+  function showPoem() {
+    var idx = lastPoem;
+    while (idx === lastPoem) idx = Math.floor(Math.random() * POEMS.length);
+    lastPoem = idx;
+    poemTextEl.textContent = POEMS[idx].text;
+    poemAuthorEl.textContent = POEMS[idx].author;
+    poemBoxEl.classList.remove("swap");
+    void poemBoxEl.offsetWidth;
+    poemBoxEl.classList.add("swap");
   }
 
   // opts: { bump:[r,c], merged:[r,c], merging:[[r,c]...], falls:{"r,c":掉几格}, spawned:[[r,c]...] }
@@ -370,6 +465,9 @@
       }
       board[anchor[0]][anchor[1]] = g.value + 1;
       sfxMerge(g.value + 1);
+      score += scoreFor(g.cells.length);
+      updateScore();
+      showPoem();
       render({ merged: anchor });
       await sleep(T_POP);
       var res = settle(anchor);
@@ -400,12 +498,17 @@
     if (busy) return;
     board = randomBoard();
     lives = START_LIVES;
+    score = 0;
     updateLives();
+    updateScore();
+    showPoem();
     sfxReset();
     render({});
   });
 
   updateLives();
+  updateScore();
+  showPoem();
   render({});
 })();
 </script>
