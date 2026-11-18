@@ -12,8 +12,15 @@
     display: flex; justify-content: center; padding: 20px 14px 32px;
   }
   .wrap { width: 100%; max-width: 480px; }
+  .fd {
+    text-align: center; font-size: 22px; font-weight: 900; font-style: italic;
+    letter-spacing: 4px; margin: 2px 0 10px;
+    background: linear-gradient(90deg, #ff5f6d, #ffc371, #7b61ff, #00c6ff);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    filter: drop-shadow(0 2px 6px rgba(123, 97, 255, .35));
+  }
   h1 { text-align: center; font-size: 24px; margin: 6px 0 4px; letter-spacing: 2px; }
-  .sub { text-align: center; font-size: 14px; color: #777; margin: 0 0 16px; line-height: 1.7; }
   .board {
     display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); gap: 8px;
     aspect-ratio: 1 / 1; width: 100%;
@@ -63,11 +70,8 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="fd">-FD防沉迷-</div>
   <h1>数字合并</h1>
-  <p class="sub">点格子 +1；上下左右连着的相同数字满 3 个就合并成一个 +1 的新方块，<br>
-  留在你点的那格（连锁合并时留在该组最左上的那格）。合并后上面的数字掉下来，<br>
-  最上面补下面四行已有的数字（随机抽一个），不会出现 0。合完立刻再扫全盘，<br>
-  直到没有可合并的为止。2 个相连不合并。</p>
   <div class="lives" id="livesBar">剩余点击 <b id="livesNum">5</b> 次<span class="lives-note" id="livesNote"> · 点一次 -1，合并一次 +1</span></div>
   <div class="board" id="board"></div>
   <div class="actions"><button id="resetBtn" type="button">重置本局</button></div>
@@ -136,6 +140,49 @@
   }
   function sleep(ms) {
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  // 短音效：WebAudio 现场合成，不用额外音频文件；每种动作一个音
+  var audioCtx = null;
+  function tone(freq, dur, type, vol, delay) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      var t0 = audioCtx.currentTime + (delay || 0);
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = type || "sine";
+      osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(vol || 0.15, t0);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    } catch (e) { /* 没声音也不影响玩 */ }
+  }
+  function sfxClick() { tone(520, 0.06, "square", 0.07); }
+  function sfxMerge(v) { // 合并：两个音上扬，合出的数字越大音越高
+    var base = 440 + Math.min(v, 12) * 40;
+    tone(base, 0.12, "sine", 0.18);
+    tone(base * 1.5, 0.16, "sine", 0.18, 0.07);
+  }
+  function sfxSpawn() { tone(880, 0.05, "triangle", 0.06); }
+  function sfxOut() { tone(180, 0.25, "sawtooth", 0.09); }
+  function sfxReset() { tone(660, 0.07, "triangle", 0.12); tone(990, 0.09, "triangle", 0.12, 0.06); }
+
+  // 掉落数字：纯随机，小数字权重高（容易凑三连，难度下来了；但凑三连仍要花点击，不会白给）
+  // 1:30% 2:25% 3:20% 4:15% 5:10%，不再从盘面现有数字里抽
+  var DROP_WEIGHTS = [[1, 30], [2, 25], [3, 20], [4, 15], [5, 10]];
+  function randomDrop() {
+    var total = 0, i;
+    for (i = 0; i < DROP_WEIGHTS.length; i++) total += DROP_WEIGHTS[i][1];
+    var roll = Math.random() * total, acc = 0;
+    for (i = 0; i < DROP_WEIGHTS.length; i++) {
+      acc += DROP_WEIGHTS[i][1];
+      if (roll < acc) return DROP_WEIGHTS[i][0];
+    }
+    return 1;
   }
 
   // opts: { bump:[r,c], merged:[r,c], merging:[[r,c]...], falls:{"r,c":掉几格}, spawned:[[r,c]...] }
@@ -222,8 +269,7 @@
     return best;
   }
 
-  // 掉落 + 补新：每列数字沉到底；顶上空出来的格子，从下面四行
-  // （第 2-5 行）已有的数字里随机抽一个补上，0 永远不会出现；
+  // 掉落 + 补新：每列数字沉到底；顶上空出来的格子用加权随机数补（1-5，小数字更常见），0 永远不会出现；
   // 返回 { newAnchor: 新方块掉落后的位置, falls: {"r,c": 掉了几格}, spawned: [[r,c]...] }
   function settle(anchor) {
     var newAnchor = anchor;
@@ -253,19 +299,11 @@
         board[r2][c] = i < vals.length ? vals[i] : null;
       }
     }
-    var pool = [];
-    for (var pr = 1; pr < ROWS; pr++) {
-      for (var pc = 0; pc < COLS; pc++) {
-        if (board[pr][pc] !== null) pool.push(board[pr][pc]);
-      }
-    }
     var spawned = [];
     for (var fc = 0; fc < COLS; fc++) {
       for (var fr = 0; fr < ROWS; fr++) {
         if (board[fr][fc] === null) {
-          board[fr][fc] = pool.length
-            ? pool[Math.floor(Math.random() * pool.length)]
-            : 1 + Math.floor(Math.random() * 9); // 兜底：下面四行万一全空，补 1-9
+          board[fr][fc] = randomDrop();
           spawned.push([fr, fc]);
         }
       }
@@ -289,9 +327,11 @@
         board[g.cells[i][0]][g.cells[i][1]] = null;
       }
       board[anchor[0]][anchor[1]] = g.value + 1;
+      sfxMerge(g.value + 1);
       render({ merged: anchor });
       await sleep(T_POP);
       var res = settle(anchor);
+      if (res.spawned.length) sfxSpawn();
       render({ merged: res.newAnchor, falls: res.falls, spawned: res.spawned });
       await sleep(T_FALL);
       lives += 1;
@@ -309,8 +349,9 @@
     lives -= 1;
     updateLives();
     board[r][c] += 1;
+    sfxClick();
     render({ bump: [r, c] });
-    resolveMerges([r, c]).then(function () { busy = false; });
+    resolveMerges([r, c]).then(function () { busy = false; if (lives <= 0) sfxOut(); });
   });
 
   resetBtn.addEventListener("click", function () {
@@ -318,6 +359,7 @@
     board = clone(INITIAL);
     lives = START_LIVES;
     updateLives();
+    sfxReset();
     render({});
   });
 
