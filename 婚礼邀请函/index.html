@@ -86,6 +86,10 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
 #entry .xi{width:84px;height:84px;font-size:40px}
 #entry p{margin-top:10px;opacity:.9}
 #entry button{margin-top:24px;background:var(--red);color:#fff;border:1px solid var(--gold2);padding:13px 30px;border-radius:999px;font-size:17px;cursor:pointer}
+#gateBox{width:100%;max-width:340px;margin-top:6px}
+#gateBox input{margin:6px 0 4px;text-align:left}
+#gateStep1 button,#gateStep2 button{display:block;width:100%;margin-top:12px}
+#gateMsg{min-height:20px;color:#ffd27d;margin-top:10px}
 #entry .small{margin-top:12px;font-size:13px;opacity:.75}
 @media (max-width:360px){.cover-in h1{font-size:28px}.count div{min-width:58px}}
 </style>
@@ -100,7 +104,7 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
     <div class="cover-in">
       <div class="xi serif">囍</div>
       <p class="sub">诚邀您见证我们的幸福时刻</p>
-      <h1 class="serif"><span id="groomName">新郎名字</span> <span>&amp;</span> <span id="brideName">新娘名字</span></h1>
+      <h1 class="serif"><span id="groomName">王漳华</span> <span>&amp;</span> <span id="brideName">范丹</span></h1>
       <p class="date serif">2027年1月23日 星期六 · 午宴 12:00</p>
       <p class="sub">2027.01.23 &nbsp;|&nbsp; 敬备喜宴 · 恭候光临</p>
       <a class="enter" href="#countdown">开启邀请函 ↓</a>
@@ -188,9 +192,9 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
   </section>
 
   <footer>
-    <div class="big serif">新郎名字 &amp; 新娘名字</div>
+    <div class="big serif">王漳华 &amp; 范丹</div>
     <p>2027年1月23日 · 敬备喜宴 · 恭候光临</p>
-    <p style="margin-top:8px">本页为占位版：名字、酒店、照片、音乐均可替换，<br>发我真实信息后直接改好，不用重做。</p>
+    <p style="margin-top:8px">酒店、照片、音乐等发我真实信息后直接改好，不用重做。</p>
   </footer>
 </div>
 
@@ -200,10 +204,31 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
   <div class="xi serif">囍</div>
   <h2 class="serif" style="font-size:26px;letter-spacing:3px;margin-top:10px">婚礼邀请函</h2>
   <p>2027年1月23日 星期六 · 午宴12:00</p>
-  <button id="entryBtn">开启邀请函 ♪</button>
-  <p class="small">点开启后会播放背景音乐，右上角可随时关闭</p>
+  <div id="gateBox">
+    <div id="gateStep1">
+      <p style="margin-top:18px">你是新郎的朋友，还是新娘的朋友？</p>
+      <button type="button" data-side="groom">我是新郎的朋友</button>
+      <button type="button" data-side="bride">我是新娘的朋友</button>
+      <p class="small">选一边，填对新郎和新娘的名字才能打开邀请函</p>
+    </div>
+    <div id="gateStep2" style="display:none">
+      <p style="margin-top:18px" id="gateSideText"></p>
+      <label style="color:#fff;text-align:left">新郎名字</label>
+      <input id="gateGroom" type="text" placeholder="请输入新郎的名字" autocomplete="off">
+      <label style="color:#fff;text-align:left">新娘名字</label>
+      <input id="gateBride" type="text" placeholder="请输入新娘的名字" autocomplete="off">
+      <button type="button" id="gateVerifyBtn">验证并开启邀请函</button>
+      <p class="small"><a href="#" id="gateBack" style="color:#fff">换一边</a></p>
+      <p id="gateMsg"></p>
+    </div>
+  </div>
+  <div id="entryOpen" style="display:none">
+    <button id="entryBtn">开启邀请函 ♪</button>
+    <p class="small">点开启后会播放背景音乐，右上角可随时关闭</p>
+  </div>
 </div>
 
+<script src="gate.js"></script>
 <script>
 /* ===== 只改这里就能换内容 =====
    名字 / 酒店 / 地址填好后，下面的值改掉即可。
@@ -213,7 +238,7 @@ footer .big{font-size:20px;color:var(--deep);letter-spacing:3px;margin-bottom:6p
    把文件放同目录并改成 MUSIC_URL='music.mp3'，或填一个 mp3 直链。
 */
 var CONFIG = {
-  groom: '新郎名字', bride: '新娘名字',
+  groom: '王漳华', bride: '范丹',
   dateText: '2027年1月23日 星期六',
   timeText: '午宴 12:00',
   venue: '', address: '',

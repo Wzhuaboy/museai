@@ -9,6 +9,18 @@ const ADMIN_KEY_HASH = "adba71f8339da1d8d0a8dc72ba8bf619a3504fa055aea53acfdbbfe2
 const LIST_KEY = "rsvp:list";
 const ATTENDS = ["一定到场", "可能到场", "遗憾缺席"];
 const COUNTS = ["1人", "2人", "3人", "4人及以上"];
+// 开门验证：新郎新娘名字只存 SHA-256 哈希，不存明文（仓库是公开的，页面里也没有答案）
+// 哈希的生成办法：去掉名字里的全部空白后算 SHA-256，部署者本地算好填入
+const GROOM_HASH = "b2bcc9cf4d7567b836e71fc46a885ca54d603f46d404ba15f397ff0497978181";
+const BRIDE_HASH = "8eacb871863cecd04e048c1adbf40e61ec6576cedab90961f634faf7cdb07b3b";
+const VERIFY_MAX_FAILS = 5; // 连续错 5 次
+const VERIFY_BLOCK_MS = 10 * 60 * 1000; // 锁 10 分钟
+function normName(s) {
+  return String(s || "").replace(/\s+/g, "");
+}
+function clientIp(request) {
+  return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "unknown";
+}
 
 function corsHeaders(request) {
   var origin = request.headers.get("Origin") || "";
@@ -107,6 +119,30 @@ export default {
       var kept = dList.filter(function (r) { return r.name !== db.name; });
       await env.RSVP_KV.put(LIST_KEY, JSON.stringify(kept));
       return jsonResponse(Object.assign({ ok: true, removed: dList.length - kept.length }, statsOf(kept)), 200, request);
+    }
+    // 开门验证：先选边（新郎/新娘的朋友），再填新郎新娘名字，都对才放行
+    // 对了不记名、不写 KV；错了记失败次数，连续错 5 次锁 10 分钟
+    if (url.pathname === "/api/verify" && request.method === "POST") {
+      var vb = await request.json().catch(function () { return null; });
+      if (!vb || (vb.side !== "groom" && vb.side !== "bride") || typeof vb.groom !== "string" || typeof vb.bride !== "string" || !vb.groom.trim() || !vb.bride.trim() || vb.groom.length > 20 || vb.bride.length > 20) {
+        return jsonResponse({ ok: false, error: "bad input" }, 400, request);
+      }
+      var ip = clientIp(request);
+      var failKey = "verify:fail:" + ip;
+      var fail = { count: 0, until: 0 };
+      try { var fr = await env.RSVP_KV.get(failKey); if (fr) fail = JSON.parse(fr); } catch (e) {}
+      if (fail.until && Date.now() < fail.until) {
+        return jsonResponse({ ok: false, error: "too many", retryAfter: Math.ceil((fail.until - Date.now()) / 1000) }, 429, request);
+      }
+      var okName = (await sha256Hex(normName(vb.groom))) === GROOM_HASH && (await sha256Hex(normName(vb.bride))) === BRIDE_HASH;
+      if (!okName) {
+        fail.count = (fail.count || 0) + 1;
+        if (fail.count >= VERIFY_MAX_FAILS) { fail.until = Date.now() + VERIFY_BLOCK_MS; fail.count = 0; }
+        await env.RSVP_KV.put(failKey, JSON.stringify(fail), { expirationTtl: 600 });
+        return jsonResponse({ ok: false, error: "wrong name" }, 200, request);
+      }
+      await env.RSVP_KV.delete(failKey);
+      return jsonResponse({ ok: true }, 200, request);
     }
     return jsonResponse({ ok: false, error: "not found" }, 404, request);
   },
