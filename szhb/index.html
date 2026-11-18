@@ -86,6 +86,34 @@
   .lives-seg.on { box-shadow: none; }
   .lives .lives-note { font-size: 12px; color: #999; white-space: nowrap; }
   .lives.out .lives-note { color: #dd1f16; }
+  .revive {
+    margin: 0 0 12px; background: #fff; border-radius: 14px; padding: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .12); text-align: center;
+  }
+  .revive-title { font-size: 18px; font-weight: 800; color: #dd1f16; }
+  .revive-desc { font-size: 13px; color: #666; margin: 6px 0 12px; }
+  .revive-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .revive-btns button {
+    font-size: 15px; font-family: inherit; padding: 10px 20px; border: none; border-radius: 999px;
+    cursor: pointer; letter-spacing: 1px;
+  }
+  .btn-primary { background: #dd1f16; color: #fff; box-shadow: 0 3px 0 rgba(0, 0, 0, .2); }
+  .btn-ghost { background: #eee; color: #333; }
+  .quiz-hint { font-size: 13px; color: #999; margin-bottom: 8px; }
+  .quiz-line {
+    font-family: "STKaiti", "KaiTi", serif; font-size: 19px; line-height: 1.8; color: #333;
+    margin-bottom: 12px;
+  }
+  .quiz-line .blank { color: #dd1f16; }
+  #quizInput {
+    width: 100%; font-size: 18px; font-family: inherit; text-align: center;
+    padding: 10px 12px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 12px;
+    outline: none;
+  }
+  #quizInput:focus { border-color: #dd1f16; }
+  .quiz-msg { font-size: 14px; min-height: 20px; margin-top: 10px; color: #666; }
+  .quiz-msg.ok { color: #2e9e44; font-weight: 700; }
+  .quiz-msg.bad { color: #dd1f16; }
   .empty {
     background: rgba(0, 0, 0, .12); box-shadow: inset 0 2px 6px rgba(0, 0, 0, .25);
     cursor: default;
@@ -111,6 +139,30 @@
     <span class="lives-label">剩余点击</span>
     <div class="lives-track" id="livesTrack"><div class="lives-seg"></div><div class="lives-seg"></div><div class="lives-seg"></div><div class="lives-seg"></div><div class="lives-seg"></div></div>
     <span class="lives-note" id="livesNote">点一次 -1，合并一次 +1</span>
+  </div>
+  <div class="revive" id="reviveBox" hidden>
+    <div id="reviveChoice">
+      <div class="revive-title">次数用完了！</div>
+      <div class="revive-desc">背一句古诗，答对就复活，恢复 3 次点击</div>
+      <div class="revive-btns">
+        <button id="reviveTryBtn" type="button" class="btn-primary">背诗复活</button>
+        <button id="reviveResetBtn" type="button" class="btn-ghost">重置本局</button>
+      </div>
+    </div>
+    <div id="reviveQuiz" hidden>
+      <div class="quiz-hint" id="quizHint"></div>
+      <div class="quiz-line" id="quizLine"></div>
+      <input id="quizInput" type="text" placeholder="填入缺失的字" autocomplete="off" maxlength="5">
+      <div class="revive-btns">
+        <button id="quizSubmitBtn" type="button" class="btn-primary">提交答案</button>
+        <button id="quizGiveUpBtn" type="button" class="btn-ghost">放弃</button>
+      </div>
+      <div class="quiz-msg" id="quizMsg"></div>
+      <div class="revive-btns" id="quizRetryBtns" hidden>
+        <button id="quizRetryBtn" type="button" class="btn-primary">再试一句</button>
+        <button id="quizResetBtn" type="button" class="btn-ghost">重置本局</button>
+      </div>
+    </div>
   </div>
   <div class="board" id="board"></div>
   <div class="actions"><button id="resetBtn" type="button">重置本局</button></div>
@@ -194,10 +246,13 @@
     }
     if (lives <= 0) {
       livesBar.classList.add("out");
-      livesNoteEl.textContent = "次数用完了，点重置本局重新开始";
+      livesNoteEl.textContent = "次数用完了，背诗复活或重置本局";
+      // 次数用完弹出背诗复活；正在答题时别打断
+      if (reviveMode !== "quiz") setRevive("choice");
     } else {
       livesBar.classList.remove("out");
       livesNoteEl.textContent = "点一次 -1，合并一次 +1";
+      setRevive(null);
     }
   }
 
@@ -256,8 +311,14 @@
     return 1;
   }
 
-  // 古诗库：直接嵌在页面里（唐宋名句，均为公版），不用单独建库文件；
-  // 以后想加到几百首，再拆成 poems.json 单独加载
+  // 完整古诗库放 poems.json（唐诗、宋词、宋诗、毛泽东诗词、名人名言），启动时加载；
+  // 加载失败（比如本地直接打开文件）就继续用上面内置的 30 首
+  if (window.fetch) {
+    fetch("poems.json").then(function (res) { return res.json(); }).then(function (data) {
+      var list = data && (data.poems || data);
+      if (list && list.length) POEMS = list;
+    }).catch(function () { /* 用内置库 */ });
+  }
   var POEMS = [
     { text: "一泊沙来一泊去，一重浪灭一重生。", author: "【唐】白居易" },
     { text: "床前明月光，疑是地上霜。", author: "【唐】李白" },
@@ -321,6 +382,111 @@
     void poemBoxEl.offsetWidth;
     poemBoxEl.classList.add("swap");
   }
+
+  // 背诗复活：次数用完后可选择填空背诗，答对恢复 3 次点击（不超 5 次上限）
+  var REVIVE_LIVES = 3;
+  var reviveMode = null; // "choice" | "quiz" | null
+  var reviveBoxEl = document.getElementById("reviveBox");
+  var reviveChoiceEl = document.getElementById("reviveChoice");
+  var reviveQuizEl = document.getElementById("reviveQuiz");
+  var quizHintEl = document.getElementById("quizHint");
+  var quizLineEl = document.getElementById("quizLine");
+  var quizInputEl = document.getElementById("quizInput");
+  var quizMsgEl = document.getElementById("quizMsg");
+  var quizRetryBtnsEl = document.getElementById("quizRetryBtns");
+  var quizSubmitBtn = document.getElementById("quizSubmitBtn");
+  var quizGiveUpBtn = document.getElementById("quizGiveUpBtn");
+  var quizRetryBtn = document.getElementById("quizRetryBtn");
+  var quizResetBtn = document.getElementById("quizResetBtn");
+  var reviveTryBtn = document.getElementById("reviveTryBtn");
+  var reviveResetBtn = document.getElementById("reviveResetBtn");
+  var currentQuiz = null;
+
+  function setRevive(mode) {
+    reviveMode = mode;
+    if (!mode) { reviveBoxEl.hidden = true; return; }
+    reviveBoxEl.hidden = false;
+    reviveChoiceEl.hidden = (mode !== "choice");
+    reviveQuizEl.hidden = (mode !== "quiz");
+  }
+  function cjkCount(s) {
+    var m = s.match(/[\u4e00-\u9fa5]/g);
+    return m ? m.length : 0;
+  }
+  function makeQuiz() {
+    // 只从汉字数够 10 的句子里出题，保证挖空后还剩上下文
+    var pool = POEMS.filter(function (p) { return cjkCount(p.text) >= 10; });
+    if (!pool.length) pool = POEMS;
+    var p = pool[Math.floor(Math.random() * pool.length)];
+    var chars = p.text.split("");
+    var cjkIdx = [];
+    for (var i = 0; i < chars.length; i++) {
+      if (/[\u4e00-\u9fa5]/.test(chars[i])) cjkIdx.push(i);
+    }
+    var n = 4 + Math.floor(Math.random() * 2); // 挖 4 或 5 个字
+    if (cjkIdx.length - n < 4) n = 4; // 至少留 4 个字当上下文
+    var maxStart = cjkIdx.length - n;
+    var start = Math.floor(Math.random() * (maxStart + 1));
+    var blankIdx = cjkIdx.slice(start, start + n);
+    var answer = blankIdx.map(function (i) { return chars[i]; }).join("");
+    var display = "";
+    for (var j = 0; j < chars.length; j++) {
+      if (blankIdx.indexOf(j) >= 0) display += '<span class="blank">＿</span>';
+      else display += chars[j];
+    }
+    return { poem: p, display: display, answer: answer, n: n };
+  }
+  function startQuiz() {
+    currentQuiz = makeQuiz();
+    quizHintEl.textContent = "提示：" + currentQuiz.poem.author + "（" + (currentQuiz.poem.category || "古诗") + "）";
+    quizLineEl.innerHTML = currentQuiz.display;
+    quizInputEl.value = "";
+    quizInputEl.placeholder = "填入缺失的 " + currentQuiz.n + " 个字";
+    quizInputEl.disabled = false;
+    quizSubmitBtn.hidden = false;
+    quizGiveUpBtn.hidden = false;
+    quizRetryBtnsEl.hidden = true;
+    quizMsgEl.textContent = "";
+    quizMsgEl.className = "quiz-msg";
+    setRevive("quiz");
+    quizInputEl.focus();
+  }
+  function normAnswer(s) { return s.replace(/[\s，。、；：？！·…—\-]/g, ""); }
+  function submitQuiz() {
+    if (!currentQuiz) return;
+    var got = normAnswer(quizInputEl.value);
+    if (!got) {
+      quizMsgEl.textContent = "先填字再提交";
+      quizMsgEl.className = "quiz-msg bad";
+      return;
+    }
+    if (got === currentQuiz.answer) {
+      lives = Math.min(START_LIVES, lives + REVIVE_LIVES);
+      updateLives(); // 次数回来了，面板收起
+      livesNoteEl.textContent = "答对了！恢复 " + REVIVE_LIVES + " 次点击";
+      setTimeout(function () {
+        if (lives > 0) livesNoteEl.textContent = "点一次 -1，合并一次 +1";
+      }, 2000);
+      // 古诗卡显示刚答对的这句完整版
+      poemTextEl.textContent = currentQuiz.poem.text;
+      poemAuthorEl.textContent = currentQuiz.poem.author;
+      sfxReset();
+    } else {
+      quizMsgEl.textContent = "答错了，正确答案是：" + currentQuiz.answer;
+      quizMsgEl.className = "quiz-msg bad";
+      quizInputEl.disabled = true;
+      quizSubmitBtn.hidden = true;
+      quizGiveUpBtn.hidden = true;
+      quizRetryBtnsEl.hidden = false;
+    }
+  }
+  reviveTryBtn.addEventListener("click", function () { startQuiz(); });
+  reviveResetBtn.addEventListener("click", function () { resetBtn.click(); });
+  quizSubmitBtn.addEventListener("click", submitQuiz);
+  quizInputEl.addEventListener("keydown", function (e) { if (e.key === "Enter") submitQuiz(); });
+  quizGiveUpBtn.addEventListener("click", function () { setRevive("choice"); });
+  quizRetryBtn.addEventListener("click", function () { startQuiz(); });
+  quizResetBtn.addEventListener("click", function () { resetBtn.click(); });
 
   // opts: { bump:[r,c], merged:[r,c], merging:[[r,c]...], falls:{"r,c":掉几格}, spawned:[[r,c]...] }
   function render(opts) {
