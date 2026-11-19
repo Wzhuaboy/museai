@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-18",
+  "count": 1,
+  "scripts": [
+    {
+      "id": 2830,
+      "filename": "1kf每日低保-每人一号-禁止多号.py",
+      "upload_time": "2026-11-18 08:01:06",
+      "api_hash": "fdc345396152c3fece8da94c53f6a6cc2693beb14c815b5e2a979902ecdd5383",
+      "download_sha256": "5f00af6aba642dff75475ed14e90a38dd38bc33ad5f924ea06ad8036035ad3f1",
+      "verify": "strip_match_head11_tail12",
+      "bytes": 18323
+    }
+  ]
+}
