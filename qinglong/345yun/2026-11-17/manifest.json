@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-17",
+  "count": 1,
+  "scripts": [
+    {
+      "id": 2829,
+      "filename": "酷狗免费版.py",
+      "upload_time": "2026-11-17 13:48:33",
+      "api_hash": "e4571afed210548a8eab6ef864a37da9c2e2eda025b9779bdf194f9e755e694f",
+      "download_sha256": "e4571afed210548a8eab6ef864a37da9c2e2eda025b9779bdf194f9e755e694f",
+      "verify": "full_match",
+      "bytes": 38447
+    }
+  ]
+}
