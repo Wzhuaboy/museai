@@ -1,29 +1,186 @@
 {
   "version": 1,
-  "updated": "2026-11-18",
+  "updated": "2026-11-19",
   "sections": [
-    {"id": "scripts", "name": "脚本", "color": "#2f80ed", "desc": "青龙自动化脚本、网易云、GitHub 热门翻译，每天自动跑的那些。"},
-    {"id": "breaker", "name": "断路器", "color": "#f2994a", "desc": "断路器标准查新、精读笔记，干活查标准用的。"},
-    {"id": "games", "name": "小游戏", "color": "#27ae60", "desc": "数字合并、华容道，摸鱼的时候玩两把。"},
-    {"id": "shop", "name": "小卖部", "color": "#e14eca", "desc": "表情包、工资、记账本、短链接，杂七杂八的小玩意儿都在这。"}
+    {
+      "id": "scripts",
+      "name": "脚本",
+      "color": "#2f80ed",
+      "desc": "青龙自动化脚本、网易云、GitHub 热门翻译，每天自动跑的那些。"
+    },
+    {
+      "id": "breaker",
+      "name": "断路器",
+      "color": "#f2994a",
+      "desc": "断路器标准查新、精读笔记，干活查标准用的。"
+    },
+    {
+      "id": "games",
+      "name": "小游戏",
+      "color": "#27ae60",
+      "desc": "数字合并、华容道，摸鱼的时候玩两把。"
+    },
+    {
+      "id": "shop",
+      "name": "小卖部",
+      "color": "#e14eca",
+      "desc": "表情包、工资、记账本、短链接，杂七杂八的小玩意儿都在这。"
+    }
   ],
   "projects": [
-    {"id": "qinglong", "section": "scripts", "name": "青龙脚本库", "desc": "同程、京东、喜马拉雅、飞米阅读等自动化脚本合集，跑在阿里云青龙面板上。", "url": "https://github.com/Wzhuaboy/qinglong", "visible": true, "action": "访问"},
-    {"id": "ncmm", "section": "scripts", "name": "网易云云贝工具", "desc": "网易云音乐云贝自动化，每天定时跑，云贝自己涨。", "url": "https://github.com/Wzhuaboy/ncmm", "visible": true, "action": "访问"},
-    {"id": "trending", "section": "scripts", "name": "GitHub 热门中文翻译", "desc": "每天翻译 3 个 GitHub 热门项目，含中文部署指南，给英文不好的人用。", "url": "https://github.com/Wzhuaboy/museai/tree/main/github-trending-cn", "visible": true, "action": "访问"},
-    {"id": "sync345", "section": "scripts", "name": "345云脚本库同步", "desc": "每天把 345 云脚本库的新脚本同步进仓库，按日期归档。", "url": "https://github.com/Wzhuaboy/museai/tree/main/qinglong/345yun", "visible": true, "action": "访问"},
-    {"id": "biaozhunchaxin", "section": "breaker", "name": "标准查新网站", "desc": "断路器等标准查新，114 条，现行、即将实施、废止状态每月复核。", "url": "https://wzhuaboy.github.io/biaozhunchaxin/", "visible": true, "action": "访问"},
-    {"id": "breaker-notes", "section": "breaker", "name": "断路器标准精读", "desc": "GB/T 10963.1、16916.1、16917.1 三本标准全本精读笔记和试验方法。", "url": "https://github.com/Wzhuaboy/museai/tree/main/standards/%E6%96%AD%E8%B7%AF%E5%99%A8", "visible": true, "action": "访问"},
-    {"id": "szhb", "section": "games", "name": "数字合并", "desc": "5×5 数字合并小游戏，带古诗卡和背诗复活，点一次、合一次。", "url": "https://wzhuaboy.github.io/museai/szhb/", "visible": true, "action": "开始玩"},
-    {"id": "huarongdao", "section": "games", "name": "USAGI 3x3 华容道", "desc": "3×3 华容道滑块拼图，usagi 主题。", "url": "https://wzhuaboy.github.io/museai/huarongdao/", "visible": true, "action": "开始玩"},
-    {"id": "pinhenge", "section": "games", "name": "拼恒哥 3x3 华容道", "desc": "3×3 华容道滑块拼图，拼恒哥主题。", "url": "https://wzhuaboy.github.io/museai/%E6%8B%BC%E6%81%92%E5%93%A5/", "visible": false, "action": "开始玩"},
-    {"id": "sticker", "section": "shop", "name": "微信表情包「打工人的牛马生活」", "desc": "AI 做的牛马打工人系列表情包，固定角色 A 牛角牛马人，正在投稿准备中。", "url": "", "tag": "即将上架", "visible": true, "action": "访问"},
-    {"id": "salary", "section": "shop", "name": "每秒工资", "desc": "工资余额每秒跳动，今天已经赚了多少、下班倒计时，一眼看清。", "url": "https://wzhuaboy.github.io/museai/salary/", "visible": true, "action": "访问"},
-    {"id": "ledger", "section": "shop", "name": "阿华手帐本", "desc": "简单记账本，支出 7 类、收入 4 类，支持云同步。", "url": "https://wzhuaboy.github.io/museai/%E8%AE%B0%E8%B4%A6%E6%9C%AC/", "visible": true, "action": "访问"},
-    {"id": "wedding", "section": "shop", "name": "婚礼邀请函", "desc": "2027 年 1 月 23 日午宴，电子邀请函，带回执。", "url": "https://wzhuaboy.github.io/museai/wedding/", "visible": true, "action": "访问"},
-    {"id": "zhua", "section": "shop", "name": "zhua 短链接", "desc": "免费短链接服务，长链接一键变短链。", "url": "https://zhua.dpdns.org/", "visible": true, "action": "访问"},
-    {"id": "hiddify", "section": "shop", "name": "Hiddify 教程", "desc": "Hiddify 使用教程，图文步骤。", "url": "https://wzhuaboy.github.io/museai/hiddify-tutorial/", "visible": true, "action": "访问"},
-    {"id": "usagi", "section": "shop", "name": "Usagi 导航站", "desc": "Usagi 导航首页，常用链接合集。", "url": "http://usagi.loc.cc/", "visible": true, "action": "访问"},
-    {"id": "lidong", "section": "shop", "name": "立冬贺卡", "desc": "立冬快乐电子贺卡。", "url": "https://wzhuaboy.github.io/museai/%E7%AB%8B%E5%86%AC%E8%B4%BA%E5%8D%A1/", "visible": true, "action": "访问"}
+    {
+      "id": "qinglong",
+      "section": "scripts",
+      "name": "青龙脚本库",
+      "desc": "同程、京东、喜马拉雅、飞米阅读等自动化脚本合集，跑在阿里云青龙面板上。",
+      "url": "https://github.com/Wzhuaboy/qinglong",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "ncmm",
+      "section": "scripts",
+      "name": "网易云云贝工具",
+      "desc": "网易云音乐云贝自动化，每天定时跑，云贝自己涨。",
+      "url": "https://github.com/Wzhuaboy/ncmm",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "trending",
+      "section": "scripts",
+      "name": "GitHub 热门中文翻译",
+      "desc": "每天翻译 3 个 GitHub 热门项目，含中文部署指南，给英文不好的人用。",
+      "url": "https://github.com/Wzhuaboy/museai/tree/main/github-trending-cn",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "sync345",
+      "section": "scripts",
+      "name": "345云脚本库同步",
+      "desc": "每天把 345 云脚本库的新脚本同步进仓库，按日期归档。",
+      "url": "https://github.com/Wzhuaboy/museai/tree/main/qinglong/345yun",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "biaozhunchaxin",
+      "section": "breaker",
+      "name": "标准查新网站",
+      "desc": "断路器等标准查新，114 条，现行、即将实施、废止状态每月复核。",
+      "url": "https://wzhuaboy.github.io/biaozhunchaxin/",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "breaker-notes",
+      "section": "breaker",
+      "name": "断路器标准精读",
+      "desc": "GB/T 10963.1、16916.1、16917.1 三本标准全本精读笔记和试验方法。",
+      "url": "https://github.com/Wzhuaboy/museai/tree/main/standards/%E6%96%AD%E8%B7%AF%E5%99%A8",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "szhb",
+      "section": "games",
+      "name": "数字合并",
+      "desc": "5×5 数字合并小游戏，带古诗卡和背诗复活，点一次、合一次。",
+      "url": "https://wzhuaboy.github.io/museai/szhb/",
+      "visible": true,
+      "action": "开始玩"
+    },
+    {
+      "id": "huarongdao",
+      "section": "games",
+      "name": "USAGI 3x3 华容道",
+      "desc": "3×3 华容道滑块拼图，usagi 主题。",
+      "url": "https://wzhuaboy.github.io/museai/huarongdao/",
+      "visible": true,
+      "action": "开始玩"
+    },
+    {
+      "id": "pinhenge",
+      "section": "games",
+      "name": "拼恒哥 3x3 华容道",
+      "desc": "3×3 华容道滑块拼图，拼恒哥主题。",
+      "url": "https://wzhuaboy.github.io/museai/%E6%8B%BC%E6%81%92%E5%93%A5/",
+      "visible": false,
+      "action": "开始玩"
+    },
+    {
+      "id": "sticker",
+      "section": "shop",
+      "name": "微信表情包「打工人的牛马生活」",
+      "desc": "AI 做的牛马打工人系列表情包，固定角色 A 牛角牛马人，正在投稿准备中。",
+      "url": "",
+      "tag": "即将上架",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "salary",
+      "section": "shop",
+      "name": "每秒工资",
+      "desc": "工资余额每秒跳动，今天已经赚了多少、下班倒计时，一眼看清。",
+      "url": "https://wzhuaboy.github.io/museai/salary/",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "ledger",
+      "section": "shop",
+      "name": "阿华手帐本",
+      "desc": "简单记账本，支出 7 类、收入 4 类，支持云同步。",
+      "url": "https://wzhuaboy.github.io/museai/%E8%AE%B0%E8%B4%A6%E6%9C%AC/",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "wedding",
+      "section": "shop",
+      "name": "婚礼邀请函",
+      "desc": "2027 年 1 月 23 日午宴，电子邀请函，带回执。",
+      "url": "https://wzhuaboy.github.io/museai/wedding/",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "zhua",
+      "section": "shop",
+      "name": "zhua 短链接",
+      "desc": "免费短链接服务，长链接一键变短链。",
+      "url": "https://zhua.dpdns.org/",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "hiddify",
+      "section": "shop",
+      "name": "Hiddify 教程",
+      "desc": "Hiddify 使用教程，图文步骤。",
+      "url": "https://wzhuaboy.github.io/museai/hiddify-tutorial/",
+      "visible": true,
+      "action": "访问"
+    },
+    {
+      "id": "usagi",
+      "section": "shop",
+      "name": "Usagi 导航站",
+      "desc": "Usagi 导航首页，常用链接合集。",
+      "url": "http://usagi.loc.cc/",
+      "visible": false,
+      "action": "访问"
+    },
+    {
+      "id": "lidong",
+      "section": "shop",
+      "name": "立冬贺卡",
+      "desc": "立冬快乐电子贺卡。",
+      "url": "https://wzhuaboy.github.io/museai/%E7%AB%8B%E5%86%AC%E8%B4%BA%E5%8D%A1/",
+      "visible": true,
+      "action": "访问"
+    }
   ]
 }
