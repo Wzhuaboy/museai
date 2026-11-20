@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-19",
+  "updated": "2026-11-20",
   "sections": [
     {
       "id": "scripts",
@@ -143,7 +143,7 @@
       "name": "婚礼邀请函",
       "desc": "2027 年 1 月 23 日午宴，电子邀请函，带回执。",
       "url": "https://wzhuaboy.github.io/museai/wedding/",
-      "visible": true,
+      "visible": false,
       "action": "访问"
     },
     {
