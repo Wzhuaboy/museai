@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-23",
+  "count": 1,
+  "scripts": [
+    {
+      "id": 2842,
+      "filename": "zhixuanbao.js",
+      "upload_time": "2026-11-23 11:44:16",
+      "api_hash": "2f8de4aa644a583ea1fbe763ab3ce9cfc613eb82177931a6ca4a3875f6af98f0",
+      "download_sha256": "dd8f4b2c6536cc224fdf00fcb14e6b939fcc818a3a9ef4623757e6d6f866069f",
+      "verify": "mismatch",
+      "bytes": 15302
+    }
+  ]
+}
