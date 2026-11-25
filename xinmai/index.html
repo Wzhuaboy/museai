@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>测一测你的心脉受损程度</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: #2a0509;
+  background: radial-gradient(120% 90% at 50% 0%, #6d101c 0%, #3d070d 55%, #22040a 100%);
+  color: #f3e7d3;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 520px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; padding: 28px 24px 40px; display: flex; flex-direction: column; }
+.screen { display: none; flex: 1; flex-direction: column; }
+.screen.active { display: flex; animation: fadeUp .45s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.eyebrow { color: #d8ab5e; font-size: 13px; letter-spacing: .35em; text-align: center; margin-top: 12vh; }
+h1 { font-family: "Songti SC", "Noto Serif SC", serif; font-size: 34px; line-height: 1.35; text-align: center; margin: 18px 0 0; font-weight: 600; }
+.divider { width: 56px; height: 2px; background: #d8ab5e; margin: 26px auto; }
+.sub { text-align: center; font-size: 15px; line-height: 1.9; color: #d9c8a8; }
+.meta { text-align: center; font-size: 13px; color: #a98f68; margin-top: 14px; letter-spacing: .15em; }
+.btn {
+  display: block; width: 100%; margin-top: auto; padding: 16px 0;
+  background: #d8ab5e; color: #2a0509; border: none; border-radius: 999px;
+  font-size: 17px; font-weight: 700; letter-spacing: .2em; cursor: pointer;
+}
+.btn:active { transform: scale(.98); }
+.btn.ghost { background: transparent; color: #d8ab5e; border: 1px solid #d8ab5e; margin-top: 22px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.back { color: #a98f68; font-size: 14px; background: none; border: none; cursor: pointer; padding: 6px 0; }
+.count { color: #d8ab5e; font-size: 14px; letter-spacing: .1em; }
+.progress { height: 3px; background: rgba(216,171,94,.25); border-radius: 2px; margin: 14px 0 34px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: #d8ab5e; border-radius: 2px; transition: width .35s ease; }
+.q { font-family: "Songti SC", "Noto Serif SC", serif; font-size: 23px; line-height: 1.6; font-weight: 600; }
+.opts { margin-top: 34px; display: flex; flex-direction: column; gap: 14px; }
+.opt {
+  width: 100%; text-align: left; padding: 17px 20px; cursor: pointer;
+  background: rgba(243,231,211,.06); border: 1px solid rgba(216,171,94,.35);
+  border-radius: 14px; color: #f3e7d3; font-size: 16px;
+}
+.opt:active, .opt.picked { background: rgba(216,171,94,.9); border-color: #d8ab5e; color: #2a0509; font-weight: 700; }
+.level-tag { text-align: center; color: #d8ab5e; font-size: 13px; letter-spacing: .3em; margin-top: 6vh; }
+.level { font-family: "Songti SC", "Noto Serif SC", serif; text-align: center; font-size: 40px; margin: 14px 0 6px; font-weight: 600; }
+.score { text-align: center; color: #a98f68; font-size: 14px; letter-spacing: .1em; }
+.verdict { text-align: center; font-size: 16px; line-height: 1.9; color: #e8dcc2; margin: 26px 0 0; }
+.card { margin-top: 26px; border: 1px solid rgba(216,171,94,.35); border-radius: 14px; padding: 20px; background: rgba(0,0,0,.18); }
+.card h2 { font-size: 15px; color: #d8ab5e; letter-spacing: .15em; margin-bottom: 12px; }
+.card p { font-size: 15px; line-height: 2; color: #e8dcc2; }
+.tips { margin-top: 18px; }
+.tips li { list-style: none; font-size: 15px; line-height: 2.1; color: #d9c8a8; padding-left: 20px; position: relative; }
+.tips li::before { content: ""; position: absolute; left: 2px; top: 14px; width: 6px; height: 6px; border-radius: 50%; background: #d8ab5e; }
+.warn { margin-top: 20px; text-align: center; font-size: 15px; line-height: 1.9; color: #e8b4b4; }
+.fine { margin-top: auto; padding-top: 34px; text-align: center; font-size: 12px; line-height: 1.8; color: #8a7360; }
+.heart { display: block; margin: 0 auto 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 首页 -->
+  <section class="screen active" id="s-home">
+    <p class="eyebrow">心 脉 自 测</p>
+    <svg class="heart" width="84" height="84" viewBox="0 0 100 100" fill="none" stroke="#d8ab5e" stroke-width="1.6">
+      <path d="M50 86 C22 64 12 44 24 30 C33 20 48 26 50 38 C52 26 67 20 76 30 C88 44 78 64 50 86 Z"/>
+      <path d="M14 52 C26 44 34 46 44 40" opacity=".7"/>
+      <path d="M86 52 C74 44 66 46 56 40" opacity=".7"/>
+      <path d="M50 88 C48 74 52 66 50 56" opacity=".5"/>
+    </svg>
+    <h1>测一测你的<br>心脉受损程度</h1>
+    <div class="divider"></div>
+    <p class="sub">最近总觉得累，睡再多也缓不过来？<br>8 道题，看看你的心脉还剩多少。</p>
+    <p class="meta">8 道题 · 约 1 分钟</p>
+    <button class="btn" id="btn-start">开始测试</button>
+  </section>
+
+  <!-- 答题 -->
+  <section class="screen" id="s-quiz">
+    <div class="topbar">
+      <button class="back" id="btn-back">← 上一题</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="progress"><i id="bar"></i></div>
+    <p class="q" id="q-text"></p>
+    <div class="opts" id="opts"></div>
+  </section>
+
+  <!-- 结果 -->
+  <section class="screen" id="s-result">
+    <p class="level-tag">你 的 测 试 结 果</p>
+    <p class="level" id="r-level"></p>
+    <p class="score" id="r-score"></p>
+    <p class="verdict" id="r-verdict"></p>
+    <div class="card">
+      <h2>主要耗损</h2>
+      <p id="r-cluster"></p>
+    </div>
+    <div class="card">
+      <h2>可以这么调</h2>
+      <ul class="tips">
+        <li>尽量 23 点前睡，别拿咖啡顶困</li>
+        <li>每天留半小时放空，别一直刷手机</li>
+        <li>适当动一动，散步、晒太阳都行</li>
+      </ul>
+    </div>
+    <p class="warn" id="r-warn" style="display:none">耗损比较重，别自己扛，建议及时就医检查。</p>
+    <button class="btn ghost" id="btn-again">重新测一次</button>
+    <p class="fine">本测试仅供娱乐参考，不能替代专业医学诊断。</p>
+  </section>
+
+</div>
+<script>
+var QS = [
+  "最近会不会上一秒还好好的，下一秒突然黑脸、发呆？",
+  "听到消息提示音，会不会懒得点开，攒一堆再回？",
+  "别人发来一大段话，你会不会看两行就不想看了？",
+  "聊着聊着，会不会突然就不想说话了？",
+  "一边做事一边回消息，脑子会不会直接卡住？",
+  "最近话是不是越来越少，能不说就不说？",
+  "对以前感兴趣的事，现在是不是提不起劲，出门都嫌累？",
+  "晚上睡不着、白天起不来，这种情况多不多？"
+];
+var OPTS = [["从不", 0], ["偶尔", 1], ["经常", 2]];
+var CLUSTERS = [
+  { name: "情绪波动", idx: [0, 3], text: "情绪起落比较大，心神不太安稳，容易一点就着，或者突然就蔫了。" },
+  { name: "社交退缩", idx: [1, 5], text: "社交电量见底，能躲就躲，回消息都觉得累。" },
+  { name: "专注耐心", idx: [2, 4], text: "专注和耐心都变差了，脑子容易卡住，一句话太长就不想看。" },
+  { name: "身体疲惫", idx: [6, 7], text: "身体先喊累了，睡再多也缓不过来，提不起劲。" }
+];
+var LEVELS = [
+  { max: 4, name: "心脉通畅", verdict: "你的心脉目前状态不错，继续保持。" },
+  { max: 8, name: "轻微耗损", verdict: "已经开始耗损了，别硬扛，早点调整还来得及。" },
+  { max: 12, name: "明显受损", verdict: "耗损比较明显，身体在提醒你，该认真调一调了。" },
+  { max: 16, name: "严重受损", verdict: "耗损比较重，身体已经在报警了。" }
+];
+var idx = 0, ans = [], lock = false;
+function $(id) { return document.getElementById(id); }
+function show(id) {
+  document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+  $(id).classList.add("active");
+  window.scrollTo(0, 0);
+}
+function render() {
+  $("count").textContent = "第 " + (idx + 1) + " / 8 题";
+  $("bar").style.width = ((idx + 1) / 8 * 100) + "%";
+  $("q-text").textContent = QS[idx];
+  var box = $("opts"); box.innerHTML = "";
+  OPTS.forEach(function (o) {
+    var b = document.createElement("button");
+    b.className = "opt"; b.textContent = o[0];
+    b.onclick = function () { pick(b, o[1]); };
+    box.appendChild(b);
+  });
+}
+function pick(btn, val) {
+  if (lock) return; lock = true;
+  btn.classList.add("picked");
+  ans[idx] = val;
+  setTimeout(function () {
+    lock = false;
+    if (idx < 7) { idx++; render(); }
+    else { finish(); }
+  }, 280);
+}
+function finish() {
+  var total = ans.reduce(function (a, b) { return a + b; }, 0);
+  var lv = LEVELS[0];
+  for (var i = 0; i < LEVELS.length; i++) { if (total <= LEVELS[i].max) { lv = LEVELS[i]; break; } }
+  var best = CLUSTERS[0], bestSum = -1;
+  CLUSTERS.forEach(function (c) {
+    var s = c.idx.reduce(function (a, i) { return a + (ans[i] || 0); }, 0);
+    if (s > bestSum) { bestSum = s; best = c; }
+  });
+  $("r-level").textContent = lv.name;
+  $("r-score").textContent = total + " 分 / 16 分";
+  $("r-verdict").textContent = lv.verdict;
+  $("r-cluster").textContent = "「" + best.name + "」——" + best.text;
+  $("r-warn").style.display = (lv.name === "严重受损") ? "block" : "none";
+  show("s-result");
+}
+$("btn-start").onclick = function () { idx = 0; ans = []; render(); show("s-quiz"); };
+$("btn-back").onclick = function () { if (idx > 0) { idx--; render(); } else { show("s-home"); } };
+$("btn-again").onclick = function () { show("s-home"); };
+</script>
+</body>
+</html>
