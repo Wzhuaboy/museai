@@ -95,16 +95,12 @@ h1 { font-family: "Songti SC", "Noto Serif SC", serif; font-size: 34px; line-hei
     <p class="score" id="r-score"></p>
     <p class="verdict" id="r-verdict"></p>
     <div class="card">
-      <h2>主要耗损</h2>
+      <h2 id="r-cluster-title">主要耗损</h2>
       <p id="r-cluster"></p>
     </div>
     <div class="card">
       <h2>可以这么调</h2>
-      <ul class="tips">
-        <li>尽量 23 点前睡，别拿咖啡顶困</li>
-        <li>每天留半小时放空，别一直刷手机</li>
-        <li>适当动一动，散步、晒太阳都行</li>
-      </ul>
+      <ul class="tips" id="r-tips"></ul>
     </div>
     <p class="warn" id="r-warn" style="display:none">耗损比较重，别自己扛，建议及时就医检查。</p>
     <button class="btn ghost" id="btn-again">重新测一次</button>
@@ -130,6 +126,13 @@ var CLUSTERS = [
   { name: "专注耐心", idx: [2, 4], text: "专注和耐心都变差了，脑子容易卡住，一句话太长就不想看。" },
   { name: "身体疲惫", idx: [6, 7], text: "身体先喊累了，睡再多也缓不过来，提不起劲。" }
 ];
+var TIPS = {
+  "情绪波动": ["别憋着，找人说说话，说出来就松一半", "睡前别想事，想到的事写下来放一边", "发火前先停 10 秒，深呼吸一次再开口"],
+  "社交退缩": ["不用勉强自己社交，先回一条最想回的消息", "每天出门走一走，别整天闷在屋里", "约一个最舒服的人吃顿饭，不用多聊"],
+  "专注耐心": ["一次只做一件事，手机放远点再开始", "累了就歇 10 分钟，别硬撑着磨时间", "大段的消息分两次看，看完一段歇一下"],
+  "身体疲惫": ["尽量 23 点前睡，别拿咖啡顶困", "白天晒晒太阳，散步 20 分钟就行", "别一下子运动过猛，先从轻量开始"],
+  "均衡": ["继续保持现在的作息，别熬夜透支", "每天留半小时放空，别一直刷手机", "适当动一动，散步、晒太阳都行"]
+};
 var LEVELS = [
   { max: 4, name: "心脉通畅", verdict: "你的心脉目前状态不错，继续保持。" },
   { max: 8, name: "轻微耗损", verdict: "已经开始耗损了，别硬扛，早点调整还来得及。" },
@@ -169,15 +172,36 @@ function finish() {
   var total = ans.reduce(function (a, b) { return a + b; }, 0);
   var lv = LEVELS[0];
   for (var i = 0; i < LEVELS.length; i++) { if (total <= LEVELS[i].max) { lv = LEVELS[i]; break; } }
-  var best = CLUSTERS[0], bestSum = -1;
-  CLUSTERS.forEach(function (c) {
-    var s = c.idx.reduce(function (a, i) { return a + (ans[i] || 0); }, 0);
-    if (s > bestSum) { bestSum = s; best = c; }
+  var sums = CLUSTERS.map(function (c) {
+    return { c: c, s: c.idx.reduce(function (a, i) { return a + (ans[i] || 0); }, 0) };
   });
+  var bestSum = Math.max.apply(null, sums.map(function (x) { return x.s; }));
+  var winners = sums.filter(function (x) { return x.s === bestSum; }).map(function (x) { return x.c; });
+  var clusterText, tipList;
+  if (bestSum === 0) {
+    $("r-cluster-title").textContent = "整体状态";
+    clusterText = "各方面都比较均衡，没有哪一块特别耗损。";
+    tipList = TIPS["均衡"];
+  } else if (winners.length === 1) {
+    $("r-cluster-title").textContent = "主要耗损";
+    clusterText = "「" + winners[0].name + "」——" + winners[0].text;
+    tipList = TIPS[winners[0].name];
+  } else {
+    $("r-cluster-title").textContent = "主要耗损";
+    clusterText = "「" + winners.map(function (w) { return w.name; }).join("」「") + "」这几块耗损差不多，都偏高。";
+    tipList = [];
+    for (var k = 0; k < 3; k++) {
+      winners.forEach(function (w) { if (tipList.length < 3) tipList.push(TIPS[w.name][k]); });
+    }
+  }
   $("r-level").textContent = lv.name;
   $("r-score").textContent = total + " 分 / 16 分";
   $("r-verdict").textContent = lv.verdict;
-  $("r-cluster").textContent = "「" + best.name + "」——" + best.text;
+  $("r-cluster").textContent = clusterText;
+  var tipsBox = $("r-tips"); tipsBox.innerHTML = "";
+  tipList.forEach(function (t) {
+    var li = document.createElement("li"); li.textContent = t; tipsBox.appendChild(li);
+  });
   $("r-warn").style.display = (lv.name === "严重受损") ? "block" : "none";
   show("s-result");
 }
